@@ -1,0 +1,19 @@
+The inference agent currently retrieves only nodes of a graph(sub-graph) related to a natural language input. the sub-graph contains only logical nodes which are supposed to have binding to physucal data in their respective data stores. Assume that teh natural language can be to retrieve data attached to the sub graph. write another version of the inference agent to return sub-graph and the data associated with the sub-graph. Modify the agent definition and the responsibility based on the description in src\agents\inference_agent.py and based on what I described above. call this agent as data_retrieval_agent . It's job is to accurately interpret user's natural query, rewrite the query in a lucid manner, query gremlin data to identify the nodes in the unified knowledge layer related to user's query and also retrieve data from respectives data bases for the logical nodes retrieves and return the sub-graph , the data. Make sure your analysis is grounded in the unified knowledge graph only. DO NOT assume any other entities outside of the  unified knowledge graph. Make sure you return data only corresponding to the logical entities returned and the data should come from queries in the respective databases. 
+
+
+167.220.238.76
+
+I'm attaching docs for reference oof a project at Mercedes Benz. based on the modeling of industrial assets in this porject (which used a meta model based approach to string together factory locations with tag hierarchies for hierarchical navigation) and also based on this implementation at Honeywell for MSartTagging and the attached summary of the data harmonization project at Chevron, create a highly technical proposal for TATA AGratas on how they can model their factory floors (starting with location all the way to machine components ) and build analytics on that data in a plug and play manner. Don't reference any microsoft components unless you absolutely need to but keep the document deeply technical. 
+
+
+ajaykhankhoje@synergetics-india.com
+rahuladekar@synergetics-india.com
+
+
+which tables store leave balances
+
+show me employee ratings for Kamal Choudhury
+
+show me performance metrics for Kamal Choudhury
+
+Show me BMI for Kamal Choudhury

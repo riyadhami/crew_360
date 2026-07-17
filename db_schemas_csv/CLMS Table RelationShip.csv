@@ -1,0 +1,23 @@
+TABLE NAME,RELATIONSHIP
+CrewBalanceUpdateByScheduler,"M_clms_crew(CrewID),  T_Crew_LeaveYear(LeaveYearId)"
+M_CLMS_Crew,M_UMS_Role(RoleID)
+M_CLMS_LeaveBalance,"M_clms_crew(CrewID),M_LeaveYear(LeaveYearId), M_LMS_LeaveType(LeaveTypeID)"
+M_Designations,No dependencies
+M_LeaveYear,No dependencies
+M_LMS_LeaveType,No dependencies
+M_LMS_StatusType,No dependencies
+M_LMS_Type,No dependencies
+M_UMS_Country,No dependencies
+M_UMS_Station,M_UMS_State(StateID)
+M_UMS_User,"M_TS_Department(DeptID), M_UMS_Station(StationID)"
+T_CLMS_Attrition,"M_clms_crew(CrewID, CrewName)"
+T_CLMS_GNDCodes,"M_clms_crew(CrewID),M_CLMS_GNDCODE(Code)"
+T_CLMS_LeaveReqDetail,"T_CLMS_LeaveReqMaster(LeaveDetailID),M_CLMS_LeaveBalance(Balance), M_LMS_LeaveType(LeaveTypeID)"
+T_CLMS_LeaveReqDetail_OtherRocadeCodes,"T_CLMS_LeaveReqMaster(LeaveDetailID),M_CLMS_LeaveBalance(Balance), M_LMS_LeaveType(LeaveTypeID)"
+T_CLMS_LeaveReqMaster,"M_clms_crew(CrewID), M_LMS_LeaveType(LeaveTypeID), M_LMS_StatusType(StatusTypeID), M_CLMS_GNDCODE(Code)"
+T_CLMS_LeaveReqMaster_OtherRocadeCodes,"M_clms_crew(CrewID), M_LMS_LeaveType(LeaveTypeID), M_LMS_StatusType(StatusTypeID), M_CLMS_GNDCODE(Code)"
+T_Crew_Leaves_Allocation,"M_clms_crew(CrewID),M_LeaveYear(LeaveYearId), M_LMS_LeaveType(LeaveTypeID)"
+T_Crew_LeaveYear,"M_clms_crew(CrewID),M_LeaveYear(LeaveYearId),"
+T_Crew_Leaveyear_Suggested,"M_clms_crew(CrewID, CrewName),M_AttritionReason(Reason), M_Designations(Designation)"
+T_SPL_Appreciation,"M_clms_crew(CrewID, CrewName)"
+CLMS_Raw_Data,"Self-contained flat export; CrewID is the natural join key back to M_CLMS_Crew(CrewID) and Indigo_HR_Raw_Data(IGA) for cross-database employee lookups"

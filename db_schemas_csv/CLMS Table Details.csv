@@ -1,0 +1,23 @@
+TABLE_NAME,Description
+CrewBalanceUpdateByScheduler,"It maintains an Sick Leave (SL) and URTI balances, capturing both previous and updated values, along with eligibility context, leave year reference, and revocation status."
+M_CLMS_Crew,"Central crew master table containing personal details, employment status, base, designation, experience, compliance dates, promotion history, and leave eligibility."
+M_CLMS_LeaveBalance,"Stores current leave balance per crew, leave type, and leave year."
+M_Designations,"Master list of crew designations used across CLMS, LMS, PA, and UMS modules."
+M_LeaveYear,"Defines leave year configuration, visibility, and administrative approval."
+M_LMS_LeaveType,"Defines leave types (SL, PL, URTI, etc.) and their display order."
+M_LMS_StatusType,Defines valid status codes for LMS transactions and processes.
+M_LMS_Type,Master table defining program/activity types and sub‑types.
+M_UMS_Country,Master table storing country reference data used across the User Management System for location and configuration purposes.
+M_UMS_Station,"Stores station/base master data including codes, region, contact email, and operational classification."
+M_UMS_User,Stores application user accounts with department and station mapping.
+T_CLMS_Attrition,Tracks crew attrition events with reasons and dates.
+T_CLMS_GNDCodes,"Stores GNDcode transactions for crew members, including duty timings, approval status, and payability indicators."
+T_CLMS_LeaveReqDetail,Child table storing breakup of leave requests by leave type
+T_CLMS_LeaveReqDetail_OtherRocadeCodes,"This table captures leave quantities, balance impact, and applicable date ranges linked to a parent leave request, enabling accurate processing and reconciliation of special leave codes."
+T_CLMS_LeaveReqMaster,Master table for leave requests raised by crew.
+T_CLMS_LeaveReqMaster_OtherRocadeCodes,"This table captures the overall leave request context, including crew details, leave period, approval status, comments, and action history, and acts as the parent table for detailed leave records"
+T_Crew_Leaves_Allocation,Stores annual leave allocations per crew and leave year.
+T_Crew_LeaveYear,Maps crew to leave year transitions including base changes.
+T_Crew_Leaveyear_Suggested,System‑calculated suggested sick leave allocations.
+T_SPL_Appreciation,Stores special appreciation/award records for crew.
+CLMS_Raw_Data,"Flat, denormalized raw export combining crew identity, leave year/type configuration, leave balances and allocations, leave requests, scheduler SL/URTI balance updates, attrition, base transfers, and appreciation records into a single wide table (one row per leave/balance/ground-duty transaction)."

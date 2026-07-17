@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Retrieval Agent | KG Inference</title>
+  <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --card: #1c2333;
+      --card-hover: #222b3a;
+      --accent: #4361ee;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --border: #30363d;
+      --green: #2ecc71;
+      --orange: #e67e22;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --pink: #ec4899;
+      --data-accent: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ───────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header span { font-size: .82rem; color: var(--muted); }
+    .backend-toggle {
+      margin-left: auto; display: flex; align-items: center; gap: 0;
+      border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+      margin-right: 14px;
+    }
+    .backend-toggle button {
+      padding: 5px 14px; font-size: .72rem; font-weight: 600;
+      border: none; cursor: pointer; color: var(--muted);
+      background: transparent; transition: background .15s, color .15s;
+    }
+    .backend-toggle button:hover { background: var(--card-hover); color: var(--text); }
+    .backend-toggle button.active { background: var(--accent); color: #fff; }
+    .header-tabs {
+      display: flex; gap: 0;
+      border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+    }
+    .header-tabs a {
+      padding: 6px 16px; font-size: .78rem; font-weight: 600;
+      text-decoration: none; color: var(--muted);
+      background: transparent; transition: background .15s, color .15s;
+    }
+    .header-tabs a:hover { background: var(--card-hover); color: var(--text); }
+    .header-tabs a.active {
+      background: var(--accent); color: #fff;
+    }
+
+    /* ── Main split layout ────────────────────── */
+    .main-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      flex: 0 0 55%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .splitter {
+      width: 5px;
+      cursor: col-resize;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .splitter:hover, .splitter.active { background: var(--accent); }
+
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+      min-height: 0;
+    }
+
+    /* ── Query bar ────────────────────────────── */
+    .query-section {
+      padding: 20px 20px 16px;
+      flex-shrink: 0;
+    }
+    .query-bar {
+      display: flex;
+      gap: 10px;
+    }
+    .query-bar input {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: .95rem;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .query-bar input::placeholder { color: var(--muted); }
+    .query-bar input:focus { border-color: var(--accent); }
+    .query-bar button {
+      padding: 12px 24px;
+      font-size: .9rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--data-accent);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    .query-bar button:hover { opacity: .85; }
+    .query-bar button:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Chat content (scrollable) ────────────── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 20px 40px;
+    }
+
+    /* ── Iteration header ─────────────────────── */
+    .iter-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0 8px;
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 600;
+    }
+    .iter-badge {
+      padding: 3px 9px;
+      border-radius: 4px;
+      font-size: .7rem;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Step card ─────────────────────────────── */
+    .step-card {
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      margin-top: 10px;
+    }
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .tool-badge {
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .args {
+      flex: 1;
+      font-size: .78rem;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .step-detail pre {
+      background: var(--bg);
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: .75rem;
+      margin-top: 6px;
+    }
+    .step-detail .duplicate-note {
+      color: var(--orange);
+      font-style: italic;
+    }
+
+    /* ── Data retrieved badge ─────────────────── */
+    .data-retrieved-badge {
+      padding: 6px 12px;
+      background: var(--green);
+      color: #fff;
+      border-radius: 6px;
+      font-size: .75rem;
+      font-weight: 600;
+      display: inline-block;
+      margin: 8px 0;
+    }
+
+    /* ── Badge colours by tool type ───────────── */
+    .badge-schema       { background: #1e3a5f; color: #60a5fa; }
+    .badge-search       { background: #3b1f5e; color: #c084fc; }
+    .badge-concept      { background: #1a3d2e; color: #4ade80; }
+    .badge-table        { background: #3b2f1a; color: #fbbf24; }
+    .badge-trace        { background: #3b1a2e; color: #f472b6; }
+    .badge-detail       { background: #1a3d3d; color: #2dd4bf; }
+    .badge-path         { background: #2d1a3b; color: #a78bfa; }
+    .badge-cross        { background: #3b2d1a; color: #fb923c; }
+    .badge-query        { background: #1a2d3b; color: #38bdf8; }
+    .badge-data         { background: #065f46; color: #10b981; }
+    .badge-default      { background: #2d2d2d; color: #9ca3af; }
+
+    /* ── Answer card ──────────────────────────── */
+    .answer-card {
+      background: var(--surface);
+      border: 1px solid var(--data-accent);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 18px;
+      display: none;
+    }
+    .answer-card.visible { display: block; animation: slideIn .4s ease; }
+    .answer-label {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--data-accent);
+      margin-bottom: 14px;
+    }
+
+    .conversational-answer {
+      background: linear-gradient(135deg, var(--data-accent) 0%, var(--cyan) 100%);
+      color: #fff;
+      padding: 16px 20px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      font-size: 1rem;
+      line-height: 1.6;
+      box-shadow: 0 2px 12px rgba(0,0,0,.15);
+    }
+    .conversational-answer strong { font-weight: 700; }
+
+    .details-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: .78rem;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 14px;
+    }
+    .details-toggle:hover { color: var(--text); border-color: var(--data-accent); }
+    .details-section { display: none; }
+    .details-section.expanded { display: block; }
+
+    .answer-body h3 {
+      margin: 14px 0 5px;
+      font-size: .9rem;
+      color: var(--cyan);
+    }
+    .answer-body h3:first-child { margin-top: 0; }
+    .answer-body p { margin: 4px 0 8px; line-height: 1.5; color: var(--text); font-size: .88rem; }
+    .answer-body ul, .answer-body ol { margin: 4px 0 10px 18px; font-size: .88rem; }
+    .answer-body li { margin-bottom: 3px; line-height: 1.45; }
+    .answer-body code {
+      background: var(--bg);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: .85em;
+      color: var(--cyan);
+    }
+    .answer-body pre {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      font-size: .8rem;
+      line-height: 1.45;
+      margin: 6px 0 14px;
+    }
+    .answer-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px;
+      font-size: .82rem;
+      max-width: 100%;
+      overflow-x: auto;
+      display: block;
+    }
+    .answer-body thead { display: table-header-group; }
+    .answer-body tbody { display: table-row-group; }
+    .answer-body tr { display: table-row; }
+    .answer-body th, .answer-body td {
+      display: table-cell;
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+    }
+    .answer-body th { background: var(--bg); font-weight: 600; color: var(--data-accent); }
+
+    /* ── Graph panel ──────────────────────────── */
+    .graph-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .graph-title {
+      font-size: .95rem;
+      font-weight: 600;
+    }
+    .graph-stats {
+      font-size: .78rem;
+      color: var(--muted);
+      flex: 1;
+    }
+    .graph-toolbar button {
+      padding: 5px 12px;
+      font-size: .75rem;
+      font-weight: 600;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .graph-toolbar button:hover { background: var(--card-hover); }
+    .graph-toolbar button.active-toggle { background: var(--accent); border-color: var(--accent); }
+
+    .graph-legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 16px;
+      font-size: .72rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .legend-shape {
+      font-size: .9rem;
+      line-height: 1;
+    }
+    .legend-sep {
+      color: var(--border);
+      font-size: .9rem;
+    }
+
+    #graphCanvas {
+      flex: 1;
+      min-height: 0;
+      background: var(--bg);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin-left: 8px;
+    }
+
+    /* Custom scrollbar */
+    .content::-webkit-scrollbar { width: 10px; }
+    .content::-webkit-scrollbar-track { background: var(--bg); }
+    .content::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 5px;
+    }
+    .content::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Data Retrieval Agent</h1>
+  <span>Graph + Data</span>
+  <div class="header-tabs">
+    <a href="/">ReAct Agent</a>
+    <a href="/basic">Basic</a>
+    <a href="/advanced">Advanced</a>
+    <a href="/data" class="active">Data Retrieval</a>
+  </div>
+  <div class="backend-toggle">
+    <button class="backend-btn active" data-backend="cosmos">Cosmos DB</button>
+    <button class="backend-btn" data-backend="neo4j">Neo4j</button>
+  </div>
+</header>
+
+<div class="main-layout">
+  <div class="left-panel">
+    <div class="query-section">
+      <div class="query-bar">
+        <input id="queryInput" type="text" placeholder="Ask about data in the knowledge graph..." autofocus>
+        <button id="submitBtn">Retrieve</button>
+      </div>
+    </div>
+    <div class="content" id="chatContent"></div>
+  </div>
+
+  <div class="splitter" id="splitter"></div>
+
+  <div class="right-panel">
+    <div class="graph-toolbar">
+      <div class="graph-title">Live Knowledge Graph</div>
+      <div class="graph-stats" id="graphStats">0 nodes · 0 edges</div>
+      <button id="clearGraphBtn">Clear</button>
+      <button id="fitGraphBtn">Fit</button>
+      <button id="togglePhysicsBtn">Physics</button>
+    </div>
+    <div class="graph-legend">
+      <div class="legend-item">
+        <span class="legend-shape" style="color:#4ade80;">■</span>
+        <span>Concept</span>
+      </div>
+      <span class="legend-sep">·</span>
+      <div class="legend-item">
+        <span class="legend-shape" style="color:#fbbf24;">▲</span>
+        <span>Table</span>
+      </div>
+      <span class="legend-sep">·</span>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#2dd4bf;"></span>
+        <span>HRData</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#f472b6;"></span>
+        <span>CLMS</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#a78bfa;"></span>
+        <span>IJP</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-dot" style="background:#fb923c;"></span>
+        <span>Multi-DB</span>
+      </div>
+    </div>
+    <div id="graphCanvas"></div>
+  </div>
+</div>
+
+<script>
+  // ── State ────────────────────────────────────────────────────────
+  let backend = 'cosmos';
+  let physicsEnabled = true;
+
+  const nodes = new vis.DataSet();
+  const edges = new vis.DataSet();
+
+  // ── Vis.js Network ───────────────────────────────────────────────
+  const container = document.getElementById('graphCanvas');
+  const data = { nodes, edges };
+  const options = {
+    nodes: {
+      shape: 'dot',
+      size: 18,
+      font: { size: 11, color: '#e6edf3', face: 'Segoe UI' },
+      borderWidth: 2,
+      shadow: true,
+    },
+    edges: {
+      width: 1.5,
+      arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+      smooth: { type: 'continuous' },
+      color: { color: '#4b5563', highlight: '#60a5fa' },
+      font: { size: 9, color: '#9ca3af', strokeWidth: 0 },
+    },
+    physics: {
+      enabled: true,
+      barnesHut: { gravitationalConstant: -3000, springLength: 150, springConstant: 0.04 },
+      stabilization: { iterations: 100 },
+    },
+    interaction: { hover: true, tooltipDelay: 100 },
+  };
+  const network = new vis.Network(container, data, options);
+
+  // ── Helpers ──────────────────────────────────────────────────────
+  function dbColor(db) {
+    switch(db?.toUpperCase()) {
+      case 'HRDATA': return '#2dd4bf';
+      case 'CLMS': return '#f472b6';
+      case 'IJP': return '#a78bfa';
+      default: return '#fb923c';
+    }
+  }
+
+  function getToolBadgeClass(toolName) {
+    if (toolName.includes('schema')) return 'badge-schema';
+    if (toolName.includes('search')) return 'badge-search';
+    if (toolName.includes('concept')) return 'badge-concept';
+    if (toolName.includes('table') || toolName.includes('list_tables')) return 'badge-table';
+    if (toolName.includes('trace') || toolName.includes('cross')) return 'badge-trace';
+    if (toolName.includes('detail')) return 'badge-detail';
+    if (toolName.includes('path')) return 'badge-path';
+    if (toolName.includes('get_sample_data') || toolName.includes('execute_query')) return 'badge-data';
+    return 'badge-default';
+  }
+
+  function updateGraphStats() {
+    document.getElementById('graphStats').textContent =
+      `${nodes.length} nodes · ${edges.length} edges`;
+  }
+
+  // ── Backend toggle ───────────────────────────────────────────────
+  document.querySelectorAll('.backend-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.backend-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      backend = btn.dataset.backend;
+    });
+  });
+
+  // ── Graph controls ───────────────────────────────────────────────
+  document.getElementById('clearGraphBtn').addEventListener('click', () => {
+    nodes.clear();
+    edges.clear();
+    updateGraphStats();
+  });
+
+  document.getElementById('fitGraphBtn').addEventListener('click', () => {
+    network.fit({ animation: true });
+  });
+
+  document.getElementById('togglePhysicsBtn').addEventListener('click', (e) => {
+    physicsEnabled = !physicsEnabled;
+    network.setOptions({ physics: { enabled: physicsEnabled } });
+    e.target.classList.toggle('active-toggle', physicsEnabled);
+  });
+
+  // ── Splitter ─────────────────────────────────────────────────────
+  const splitter = document.getElementById('splitter');
+  const leftPanel = document.querySelector('.left-panel');
+  let isDragging = false;
+
+  splitter.addEventListener('mousedown', () => {
+    isDragging = true;
+    splitter.classList.add('active');
+    document.body.style.cursor = 'col-resize';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const totalWidth = window.innerWidth;
+    const newLeftWidth = (e.clientX / totalWidth) * 100;
+    if (newLeftWidth > 30 && newLeftWidth < 70) {
+      leftPanel.style.flex = `0 0 ${newLeftWidth}%`;
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      splitter.classList.remove('active');
+      document.body.style.cursor = '';
+    }
+  });
+
+  // ── Query submission ─────────────────────────────────────────────
+  const queryInput = document.getElementById('queryInput');
+  const submitBtn = document.getElementById('submitBtn');
+  const chatContent = document.getElementById('chatContent');
+
+  async function runQuery() {
+    const query = queryInput.value.trim();
+    if (!query) return;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Running<span class="spinner"></span>';
+
+    // Clear previous answer
+    document.querySelectorAll('.answer-card').forEach(el => el.remove());
+
+    let currentIter = null;
+
+    // Send query via fetch (POST)
+    fetch('/data/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, backend })
+    }).then(res => {
+      if (!res.ok) throw new Error('Request failed');
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      function readStream() {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Retrieve';
+            return;
+          }
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const eventData = JSON.parse(line.slice(6));
+              handleEvent(eventData);
+            }
+          }
+          readStream();
+        });
+      }
+      readStream();
+    }).catch(err => {
+      console.error(err);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Retrieve';
+      alert('Query failed: ' + err.message);
+    });
+
+    function handleEvent(event) {
+      switch (event.type) {
+        case 'iteration':
+          currentIter = document.createElement('div');
+          currentIter.className = 'iter-header';
+          currentIter.innerHTML = `
+            <span class="iter-badge">Iteration ${event.number}/${event.max}</span>
+          `;
+          chatContent.appendChild(currentIter);
+          chatContent.scrollTop = chatContent.scrollHeight;
+          break;
+
+        case 'tool_call':
+          const stepCard = document.createElement('div');
+          stepCard.className = 'step-card';
+          const badgeClass = getToolBadgeClass(event.name);
+          const argsStr = JSON.stringify(event.args);
+          stepCard.innerHTML = `
+            <div class="step-header">
+              <span class="tool-badge ${badgeClass}">${event.name}</span>
+              <span class="args">${argsStr}</span>
+            </div>
+            <div class="step-detail"></div>
+          `;
+          chatContent.appendChild(stepCard);
+          chatContent.scrollTop = chatContent.scrollHeight;
+          break;
+
+        case 'data_retrieved':
+          const dataNotice = document.createElement('div');
+          dataNotice.className = 'data-retrieved-badge';
+          dataNotice.textContent = `✓ Retrieved ${event.row_count} rows from ${event.database}.${event.table}`;
+          const lastStep = chatContent.querySelector('.step-card:last-child .step-detail');
+          if (lastStep) {
+            lastStep.appendChild(dataNotice);
+          }
+          chatContent.scrollTop = chatContent.scrollHeight;
+          break;
+
+        case 'tool_result':
+          const lastStepDetail = chatContent.querySelector('.step-card:last-child .step-detail');
+          if (lastStepDetail) {
+            if (event.duplicate) {
+              lastStepDetail.innerHTML = '<p class="duplicate-note">⚠ Duplicate call</p>';
+            } else {
+              const pre = document.createElement('pre');
+              pre.textContent = event.preview;
+              lastStepDetail.appendChild(pre);
+            }
+
+            // Merge graph hints
+            if (event.graph && !event.duplicate) {
+              try {
+                for (const n of event.graph.nodes || []) {
+                  if (!n || !n.database || !n.name) continue;
+                  const nodeId = `${n.database}::${n.name}`;
+                  if (!nodes.get(nodeId)) {
+                    const shape = n.type === 'Concept' ? 'box' : 'triangle';
+                    nodes.add({
+                      id: nodeId,
+                      label: n.name,
+                      shape,
+                      color: { background: dbColor(n.database), border: '#fff' },
+                      title: `${n.type} (${n.database})`
+                    });
+                  }
+                }
+                for (const e of event.graph.edges || []) {
+                  if (!e || !e.source_db || !e.source || !e.target_db || !e.target) continue;
+                  const srcId = `${e.source_db}::${e.source}`;
+                  const tgtId = `${e.target_db}::${e.target}`;
+                  // Skip dangling edges — vis-network throws (and can wedge the whole
+                  // canvas) if an edge references a node id that was never added.
+                  if (!nodes.get(srcId) || !nodes.get(tgtId)) continue;
+                  const edgeId = `${srcId}->${tgtId}`;
+                  if (!edges.get(edgeId)) {
+                    edges.add({ id: edgeId, from: srcId, to: tgtId, label: e.label || '' });
+                  }
+                }
+              } catch (graphErr) {
+                console.error('Graph render error (non-fatal, skipped):', graphErr, event.graph);
+              }
+              updateGraphStats();
+            }
+          }
+          chatContent.scrollTop = chatContent.scrollHeight;
+          break;
+
+        case 'done':
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Retrieve';
+          const answerCard = document.createElement('div');
+          answerCard.className = 'answer-card';
+          answerCard.innerHTML = `
+            <div class="answer-label">✓ Result (${event.iterations} iterations)</div>
+            <div class="answer-body"></div>
+          `;
+          
+          // Parse JSON answer if possible
+          let answerContent = event.answer || 'No answer';
+          try {
+            const jsonAnswer = JSON.parse(answerContent);
+            answerContent = renderDataAnswer(jsonAnswer);
+          } catch {
+            answerContent = `<pre>${answerContent}</pre>`;
+          }
+          
+          answerCard.querySelector('.answer-body').innerHTML = answerContent;
+          chatContent.appendChild(answerCard);
+          setTimeout(() => answerCard.classList.add('visible'), 50);
+          chatContent.scrollTop = chatContent.scrollHeight;
+          break;
+
+        case 'error':
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Retrieve';
+          alert('Error: ' + event.message);
+          break;
+      }
+    }
+
+    function renderDataAnswer(json) {
+      let html = '<div style="max-width: 100%;">';
+
+      // Conversational answer — the headline, always shown first
+      if (json.conversational_answer) {
+        html += `<div class="conversational-answer">${json.conversational_answer}</div>`;
+        html += `<button class="details-toggle" onclick="this.nextElementSibling.classList.toggle('expanded'); this.textContent = this.textContent.includes('Show') ? 'Hide technical details ▲' : 'Show technical details ▼';">Show technical details ▼</button>`;
+        html += '<div class="details-section">';
+      }
+
+      // Original Query
+      if (json.original_query) {
+        html += `
+          <div style="background: var(--card); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; border-left: 3px solid var(--data-accent);">
+            <div style="font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--data-accent); margin-bottom: 6px;">Original Query</div>
+            <div style="font-size: .92rem;">${json.original_query}</div>
+          </div>`;
+      }
+      
+      // Reformulated Query
+      if (json.reformulated_query) {
+        html += `
+          <div style="background: var(--card); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; border-left: 3px solid var(--cyan);">
+            <div style="font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--cyan); margin-bottom: 6px;">Reformulated Query</div>
+            <div style="font-size: .88rem; line-height: 1.5;">${json.reformulated_query}</div>
+          </div>`;
+      }
+      
+      // Relevant Databases
+      if (json.relevant_databases && json.relevant_databases.length > 0) {
+        html += `
+          <div style="background: var(--card); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">
+            <div style="font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--purple); margin-bottom: 8px;">Databases Queried</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">`;
+        json.relevant_databases.forEach(db => {
+          html += `<span style="background: var(--bg); padding: 4px 12px; border-radius: 4px; font-size: .82rem; color: ${dbColor(db)}; border: 1px solid var(--border);">${db}</span>`;
+        });
+        html += '</div></div>';
+      }
+      
+      // Knowledge Graph Structure
+      if (json.subgraph) {
+        html += `
+          <div style="background: var(--card); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">
+            <div style="font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--purple); margin-bottom: 12px;">Knowledge Graph Structure</div>`;
+        
+        // Concepts
+        if (json.subgraph.concepts && json.subgraph.concepts.length > 0) {
+          html += '<div style="margin-bottom: 12px;"><div style="font-size: .78rem; font-weight: 600; color: var(--green); margin-bottom: 6px;">■ Concepts</div><ul style="margin-left: 18px; font-size: .85rem;">';
+          json.subgraph.concepts.forEach(c => {
+            html += `<li style="margin-bottom: 4px;"><strong>${c.name}</strong> <span style="color: var(--muted);">(${c.database})</span><br><span style="font-size: .8rem; color: var(--muted);">${c.description || ''}</span></li>`;
+          });
+          html += '</ul></div>';
+        }
+        
+        // Tables
+        if (json.subgraph.tables && json.subgraph.tables.length > 0) {
+          html += '<div style="margin-bottom: 12px;"><div style="font-size: .78rem; font-weight: 600; color: var(--orange); margin-bottom: 6px;">▲ Tables</div><ul style="margin-left: 18px; font-size: .85rem;">';
+          json.subgraph.tables.forEach(t => {
+            html += `<li style="margin-bottom: 6px;"><strong>${t.name}</strong> <span style="color: var(--muted);">(${t.database})</span>`;
+            if (t.description) {
+              html += `<br><span style="font-size: .78rem; color: var(--muted);">${t.description}</span>`;
+            }
+            if (t.columns && t.columns.length > 0) {
+              html += `<br><span style="font-size: .75rem; color: var(--muted);">Columns: ${t.columns.slice(0, 5).join(', ')}${t.columns.length > 5 ? '...' : ''}</span>`;
+            }
+            html += '</li>';
+          });
+          html += '</ul></div>';
+        }
+        
+        html += '</div>';
+      }
+      
+      // Retrieved Data (Main Section)
+      if (json.data) {
+        const hasData = Object.values(json.data).some(d => {
+          if (Array.isArray(d) && d.length > 0) return true;
+          if (d && d.data && Array.isArray(d.data) && d.data.length > 0) return true;
+          return false;
+        });
+        
+        if (hasData) {
+          html += `
+            <div style="background: linear-gradient(135deg, var(--card) 0%, var(--surface) 100%); padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 2px solid var(--data-accent);">
+              <div style="font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--data-accent); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">📊</span> Retrieved Data
+              </div>`;
+          
+          for (const [tableName, dataResult] of Object.entries(json.data)) {
+            // Skip metadata fields
+            if (tableName === 'assembled_result') continue;
+            
+            const rows = Array.isArray(dataResult) ? dataResult : (dataResult.data || []);
+            const cols = dataResult.columns || (rows.length > 0 ? Object.keys(rows[0]) : []);
+            
+            if (rows.length > 0) {
+              html += `
+                <div style="margin-bottom: 14px;">
+                  <div style="font-size: .82rem; font-weight: 600; color: var(--data-accent); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <span style="background: var(--data-accent); color: white; padding: 2px 8px; border-radius: 3px; font-size: .72rem;">${rows.length} rows</span>
+                    <span>${tableName}</span>
+                  </div>
+                  <div style="overflow-x: auto; max-width: 100%;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: .8rem; background: var(--bg);">
+                      <thead>
+                        <tr>`;
+              
+              cols.forEach(col => {
+                html += `<th style="background: var(--card); border: 1px solid var(--border); padding: 8px 10px; text-align: left; font-weight: 600; color: var(--data-accent); white-space: nowrap;">${col}</th>`;
+              });
+              
+              html += '</tr></thead><tbody>';
+              
+              rows.forEach((row, idx) => {
+                html += `<tr style="background: ${idx % 2 === 0 ? 'var(--bg)' : 'var(--surface)'};">`;
+                cols.forEach(col => {
+                  const value = row[col] !== null && row[col] !== undefined ? row[col] : '';
+                  const displayValue = String(value).length > 100 ? String(value).substring(0, 100) + '...' : String(value);
+                  html += `<td style="border: 1px solid var(--border); padding: 8px 10px; color: var(--text);">${displayValue}</td>`;
+                });
+                html += '</tr>';
+              });
+              
+              html += '</tbody></table></div></div>';
+            }
+          }
+          
+          // Assembled result
+          if (json.data.assembled_result && json.data.assembled_result.length > 0) {
+            const rows = json.data.assembled_result;
+            const cols = Object.keys(rows[0]);
+            html += `
+              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                <div style="font-size: .82rem; font-weight: 600; color: var(--cyan); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                  <span style="background: var(--cyan); color: white; padding: 2px 8px; border-radius: 3px; font-size: .72rem;">${rows.length} rows</span>
+                  <span>📦 Assembled Result (JOIN)</span>
+                </div>
+                <div style="overflow-x: auto; max-width: 100%;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: .8rem; background: var(--bg);">
+                    <thead><tr>`;
+            
+            cols.forEach(col => {
+              html += `<th style="background: var(--card); border: 1px solid var(--border); padding: 8px 10px; text-align: left; font-weight: 600; color: var(--cyan); white-space: nowrap;">${col}</th>`;
+            });
+            
+            html += '</tr></thead><tbody>';
+            
+            rows.forEach((row, idx) => {
+              html += `<tr style="background: ${idx % 2 === 0 ? 'var(--bg)' : 'var(--surface)'};">`;
+              cols.forEach(col => {
+                const value = row[col] !== null && row[col] !== undefined ? row[col] : '';
+                const displayValue = String(value).length > 100 ? String(value).substring(0, 100) + '...' : String(value);
+                html += `<td style="border: 1px solid var(--border); padding: 8px 10px; color: var(--text);">${displayValue}</td>`;
+              });
+              html += '</tr>';
+            });
+            
+            html += '</tbody></table></div></div>';
+          }
+          
+          html += '</div>';
+        } else {
+          html += `
+            <div style="background: var(--card); padding: 16px; border-radius: 6px; margin-bottom: 16px; border-left: 3px solid var(--orange);">
+              <div style="font-size: .82rem; font-weight: 600; color: var(--orange); margin-bottom: 6px;">⚠️ No Data Found</div>
+              <div style="font-size: .85rem; color: var(--muted);">The query executed successfully but returned no matching records.</div>
+            </div>`;
+        }
+      }
+      
+      // Query Plan
+      if (json.query_plan) {
+        const planText = typeof json.query_plan === 'string' ? json.query_plan : (Array.isArray(json.query_plan) ? json.query_plan.join(' → ') : JSON.stringify(json.query_plan));
+        html += `
+          <div style="background: var(--card); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">
+            <div style="font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--cyan); margin-bottom: 8px;">🔍 Query Execution Plan</div>
+            <div style="font-size: .82rem; line-height: 1.6; white-space: pre-wrap; color: var(--text);">${planText}</div>
+          </div>`;
+      }
+      
+      // Graph Exploration Summary
+      if (json.graph_exploration_summary) {
+        html += `
+          <div style="background: var(--card); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">
+            <div style="font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--purple); margin-bottom: 8px;">🗺️ Graph Exploration Summary</div>
+            <div style="font-size: .82rem; line-height: 1.6; color: var(--muted);">${json.graph_exploration_summary}</div>
+          </div>`;
+      }
+      
+      // Notes
+      if (json.notes) {
+        const notesArray = Array.isArray(json.notes) ? json.notes : [json.notes];
+        html += `
+          <div style="background: var(--card); padding: 12px 16px; border-radius: 6px; border-left: 3px solid var(--muted);">
+            <div style="font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px;">📝 Notes</div>
+            <ul style="margin-left: 18px; font-size: .82rem; line-height: 1.5;">`;
+        notesArray.forEach(note => {
+          html += `<li style="margin-bottom: 4px; color: var(--muted);">${note}</li>`;
+        });
+        html += '</ul></div>';
+      }
+
+      if (json.conversational_answer) {
+        html += '</div>'; // close .details-section
+      }
+
+      html += '</div>';
+      return html;
+    }
+  }
+
+  submitBtn.addEventListener('click', runQuery);
+  queryInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') runQuery();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+TABLE_NAME,COLUMN_NAME,DATA_TYPE,DESCRIPTION
+Indigo_HR_Raw_Data,Req Id,string,Job requisition ID
+Indigo_HR_Raw_Data,IGA,string,Employee ID of Indigo employees
+Indigo_HR_Raw_Data,Name,string,Employee name
+Indigo_HR_Raw_Data,Base,string,Employee base location
+Indigo_HR_Raw_Data,Designation,string,Employee designation
+Indigo_HR_Raw_Data,Applicant's Function,string,Application main function
+Indigo_HR_Raw_Data,IJP End Date,date,Close date of job posting
+Indigo_HR_Raw_Data,Email id,string,Employee email address
+Indigo_HR_Raw_Data,Phone No,string,Employee phone number
+Indigo_HR_Raw_Data,DOB,date,Date of birth
+Indigo_HR_Raw_Data,Age (As on the last date),integer,Employee age
+Indigo_HR_Raw_Data,DOJ,date,Date of joining
+Indigo_HR_Raw_Data,Months in IndiGo,integer,Tenure in months
+Indigo_HR_Raw_Data,Date of Release,date,Release/exit date if applicable
+Indigo_HR_Raw_Data,Total Flying Expeirence (In IndiGo),string,Flying experience in Indigo
+Indigo_HR_Raw_Data,COC,string,Certificate of Competency
+Indigo_HR_Raw_Data,Aircraft type,string,Type of aircraft qualified for
+Indigo_HR_Raw_Data,Eligibility Check as per HR,string,HR eligibility check result
+Indigo_HR_Raw_Data,Message,string,Message from HR about the employee
+Indigo_HR_Raw_Data,Preferred Location 1,string,Employee's preferred location 1
+Indigo_HR_Raw_Data,Preferred Location 2,string,Employee's preferred location 2
+Indigo_HR_Raw_Data,Preferred Location 3,string,Employee's preferred location 3

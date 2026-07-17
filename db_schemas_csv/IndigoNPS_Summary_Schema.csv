@@ -1,0 +1,66 @@
+TABLE_NAME,COLUMN_NAME,DATA_TYPE,DESCRIPTION
+IndigoNPS_Summary,NPS Type,string,Passenger NPS classification (Promoters/Passives/Detractors)
+IndigoNPS_Summary,Start Date Time,string,Survey response start timestamp
+IndigoNPS_Summary,FLTNBR,integer,Flight number
+IndigoNPS_Summary,SSR without Description,string,Special service request code without description
+IndigoNPS_Summary,DEP,string,Departure airport code
+IndigoNPS_Summary,ARR,string,Arrival airport code
+IndigoNPS_Summary,Response Status,string,Survey completion status
+IndigoNPS_Summary,Pre Booked Meal,integer,Whether a meal was pre-booked (0/1)
+IndigoNPS_Summary,Baggage Weight,integer,Checked baggage weight in kg
+IndigoNPS_Summary,Baggage Count,integer,Number of checked bags
+IndigoNPS_Summary,CheckIn Type,string,Check-in channel used (Kiosk/Counter/Online)
+IndigoNPS_Summary,Departure Station,string,Departure city name
+IndigoNPS_Summary,Arrival station,string,Arrival city name
+IndigoNPS_Summary,City Pair,string,Departure-arrival route code (e.g. DEL-CCU)
+IndigoNPS_Summary,Title,string,Passenger title (Mr/Mrs/etc.)
+IndigoNPS_Summary,First Name,string,Passenger first name
+IndigoNPS_Summary,Middle Name,string,Passenger middle name
+IndigoNPS_Summary,Last Name,string,Passenger last name
+IndigoNPS_Summary,Source Of Booking,string,Booking channel or travel agency
+IndigoNPS_Summary,Departure Date,string,Flight departure date
+IndigoNPS_Summary,Departure Time,string,Flight departure time
+IndigoNPS_Summary,Arrival Station Hindi,string,Arrival city name in Hindi
+IndigoNPS_Summary,CPML,string,Child/infant meal indicator
+IndigoNPS_Summary,NPS Score,integer,Overall Net Promoter Score (0-10)
+IndigoNPS_Summary,Booking experience,integer,Booking stage satisfaction rating (1-5)
+IndigoNPS_Summary,Pre-travel information experience,integer,Pre-travel information stage satisfaction rating (1-5)
+IndigoNPS_Summary,Check-in experience,integer,Check-in stage satisfaction rating (1-5)
+IndigoNPS_Summary,Boarding experience,integer,Boarding stage satisfaction rating (1-5)
+IndigoNPS_Summary,On-board experience,integer,In-flight stage satisfaction rating (1-5)
+IndigoNPS_Summary,Arrival experience,integer,Arrival stage satisfaction rating (1-5)
+IndigoNPS_Summary,Please share your reasons for the rating,string,Free-text rationale for the overall rating
+IndigoNPS_Summary,Ease of booking (itinerary / meals / s,string,Sub-rating: ease of booking itinerary/meals/seats (1-5 or 'No')
+IndigoNPS_Summary,Required information available on websit,string,Sub-rating: website information availability (1-5 or 'No')
+IndigoNPS_Summary,Ease of payment (booking / add ons),string,Sub-rating: ease of payment for booking/add-ons (1-5 or 'No')
+IndigoNPS_Summary,Relevant information before arriving at,string,Sub-rating: pre-arrival information relevance (1-5 or 'No')
+IndigoNPS_Summary,Query handling – Contact center / Dottie,string,Sub-rating: contact center/chatbot query handling (1-5 or 'No')
+IndigoNPS_Summary,your pre-travel experience?,string,Overall pre-travel experience sub-rating
+IndigoNPS_Summary,Check in process was easy(Online / Kiosk,string,Sub-rating: check-in process ease (1-5 or 'No')
+IndigoNPS_Summary,Time taken to check in(Counter-within15,string,Sub-rating: check-in wait time (1-5 or 'No')
+IndigoNPS_Summary,Staff efficiency at the counter,string,Sub-rating: counter staff efficiency (1-5 or 'No')
+IndigoNPS_Summary,your check-in experience,string,Overall check-in experience sub-rating
+IndigoNPS_Summary,Experience with airport security,string,Sub-rating: airport security experience (1-5 or 'No')
+IndigoNPS_Summary,Boarding information shared / display,string,Sub-rating: boarding information clarity (1-5 or 'No')
+IndigoNPS_Summary,Clarity of announcements,string,Sub-rating: boarding announcement clarity (1-5 or 'No')
+IndigoNPS_Summary,Staff efficiency at the boarding gate,string,Sub-rating: boarding gate staff efficiency (1-5 or 'No')
+IndigoNPS_Summary,Crew helpfulness,string,Sub-rating: cabin crew helpfulness (1-5 or 'No')
+IndigoNPS_Summary,Clarity of crew announcements,string,Sub-rating: cabin crew announcement clarity (1-5 or 'No')
+IndigoNPS_Summary,Clarity of pilot announcements,string,Sub-rating: pilot announcement clarity (1-5 or 'No')
+IndigoNPS_Summary,Cabin cleanliness,string,Sub-rating: cabin cleanliness (1-5 or 'No')
+IndigoNPS_Summary,Toilet cleanliness,string,Sub-rating: lavatory cleanliness (1-5 or 'No')
+IndigoNPS_Summary,your on-board experience?,string,Overall on-board experience sub-rating
+IndigoNPS_Summary,Service experience– Contact center,string,Sub-rating: in-flight contact center service (1-5 or 'No')
+IndigoNPS_Summary,Did you receive your bag within 25 min o,string,Sub-rating: baggage delivery time compliance (1-5 or 'No')
+IndigoNPS_Summary,Staff efficiency at the arrival desk,string,Sub-rating: arrival desk staff efficiency (1-5 or 'No')
+IndigoNPS_Summary,your arrival experience?,string,Overall arrival experience sub-rating
+IndigoNPS_Summary,Crew Base1(LDE),string,Operating crew member 1 base (Lead Cabin Crew)
+IndigoNPS_Summary,Crew Base2(CA),string,Operating crew member 2 base (Captain)
+IndigoNPS_Summary,Crew Base3(CA),string,Operating crew member 3 base
+IndigoNPS_Summary,Crew Base4(CA),string,Operating crew member 4 base
+IndigoNPS_Summary,Is Moved Date,date,Date the survey/flight record was moved (if applicable)
+IndigoNPS_Summary,Total No Of Pax,integer,Total passengers on the flight
+IndigoNPS_Summary,Crew Name,string,Name of the operating crew member attributed to this survey
+IndigoNPS_Summary,IGA Code,string,Employee ID of the attributed crew member in prefixed format (e.g. IGA63584)
+IndigoNPS_Summary,Survey: Name,string,Survey template/campaign name
+IndigoNPS_Summary,IGA,integer,Employee ID of the attributed crew member (numeric; matches Indigo_HR_Raw_Data.IGA and CLMS_Raw_Data.IGA — primary key for cross-database joins)

@@ -1,0 +1,143 @@
+TABLE_NAME,COLUMN_NAME,DATA_TYPE,DESCRIPTION
+Indigo_NPS_Raw_Data,NPS Type,string,NPS Type
+Indigo_NPS_Raw_Data,Start Date Time,string,Start Date Time
+Indigo_NPS_Raw_Data,FLTNBR,integer,FLTNBR
+Indigo_NPS_Raw_Data,SSR without Description,string,SSR without Description
+Indigo_NPS_Raw_Data,DEP,string,DEP
+Indigo_NPS_Raw_Data,ARR,string,ARR
+Indigo_NPS_Raw_Data,Response Status,string,Response Status
+Indigo_NPS_Raw_Data,Pre Booked Meal,string,Pre Booked Meal
+Indigo_NPS_Raw_Data,Baggage Weight,integer,Baggage Weight
+Indigo_NPS_Raw_Data,Baggage Count,integer,Baggage Count
+Indigo_NPS_Raw_Data,CheckIn Type,string,CheckIn Type
+Indigo_NPS_Raw_Data,Departure Station,string,Departure Station
+Indigo_NPS_Raw_Data,Arrival station,string,Arrival station
+Indigo_NPS_Raw_Data,City Pair,string,City Pair
+Indigo_NPS_Raw_Data,Title,string,Title
+Indigo_NPS_Raw_Data,First Name,string,First Name
+Indigo_NPS_Raw_Data,Middle Name,float,Middle Name
+Indigo_NPS_Raw_Data,Last Name,string,Last Name
+Indigo_NPS_Raw_Data,Source Of Booking,string,Source Of Booking
+Indigo_NPS_Raw_Data,Departure Date,string,Departure Date
+Indigo_NPS_Raw_Data,Departure Time,string,Departure Time
+Indigo_NPS_Raw_Data,Survey Text,string,Survey Text
+Indigo_NPS_Raw_Data,Survey Text Hindi,string,Survey Text Hindi
+Indigo_NPS_Raw_Data,Departure Station Hindi,string,Departure Station Hindi
+Indigo_NPS_Raw_Data,Onboard Meal Purchased,string,Onboard Meal Purchased
+Indigo_NPS_Raw_Data,Arrival Station Hindi,string,Arrival Station Hindi
+Indigo_NPS_Raw_Data,CPML,string,CPML
+Indigo_NPS_Raw_Data,NPS Score,integer,NPS Score
+Indigo_NPS_Raw_Data,Booking experience,integer,Booking experience
+Indigo_NPS_Raw_Data,Pre-travel information experience,integer,Pre-travel information experience
+Indigo_NPS_Raw_Data,Check-in experience,integer,Check-in experience
+Indigo_NPS_Raw_Data,Boarding experience,integer,Boarding experience
+Indigo_NPS_Raw_Data,On-board experience,float,On-board experience
+Indigo_NPS_Raw_Data,Arrival experience,integer,Arrival experience
+Indigo_NPS_Raw_Data,Please share your reasons for the rating,string,Please share your reasons for the rating
+Indigo_NPS_Raw_Data,Ease of booking (itinerary / meals / s,float,Ease of booking (itinerary / meals / s
+Indigo_NPS_Raw_Data,Required information available on websit,float,Required information available on websit
+Indigo_NPS_Raw_Data,Ease of payment (booking / add ons),float,Ease of payment (booking / add ons)
+Indigo_NPS_Raw_Data,Relevant information before arriving at,float,Relevant information before arriving at
+Indigo_NPS_Raw_Data,Query handling – Contact center / Dottie,float,Query handling – Contact center / Dottie
+Indigo_NPS_Raw_Data,your pre-travel experience?,string,your pre-travel experience?
+Indigo_NPS_Raw_Data,Check in process was easy(Online / Kiosk,float,Check in process was easy(Online / Kiosk
+Indigo_NPS_Raw_Data,Time taken to check in(Counter-within15,float,Time taken to check in(Counter-within15
+Indigo_NPS_Raw_Data,Staff efficiency at the counter,float,Staff efficiency at the counter
+Indigo_NPS_Raw_Data,your check-in experience,string,your check-in experience
+Indigo_NPS_Raw_Data,Experience with airport security,float,Experience with airport security
+Indigo_NPS_Raw_Data,Boarding information shared / display,float,Boarding information shared / display
+Indigo_NPS_Raw_Data,Clarity of announcements,float,Clarity of announcements
+Indigo_NPS_Raw_Data,Staff efficiency at the boarding gate,float,Staff efficiency at the boarding gate
+Indigo_NPS_Raw_Data,Gate change handled efficiently,float,Gate change handled efficiently
+Indigo_NPS_Raw_Data,IndiGo coach experience(if experienced),float,IndiGo coach experience(if experienced)
+Indigo_NPS_Raw_Data,your boarding experience?,string,your boarding experience?
+Indigo_NPS_Raw_Data,Snacks and beverage (if experienced),float,Snacks and beverage (if experienced)
+Indigo_NPS_Raw_Data,Quality of pre booked snacks,float,Quality of pre booked snacks
+Indigo_NPS_Raw_Data,Prebooked Snacks were served,float,Prebooked Snacks were served
+Indigo_NPS_Raw_Data,Quality of snacks bought on Board,float,Quality of snacks bought on Board
+Indigo_NPS_Raw_Data,Crew helpfulness,float,Crew helpfulness
+Indigo_NPS_Raw_Data,Upkeep of seats,float,Upkeep of seats
+Indigo_NPS_Raw_Data,Clarity of crew announcements,float,Clarity of crew announcements
+Indigo_NPS_Raw_Data,Clarity of pilot announcements,float,Clarity of pilot announcements
+Indigo_NPS_Raw_Data,Cabin cleanliness,float,Cabin cleanliness
+Indigo_NPS_Raw_Data,Toilet cleanliness,float,Toilet cleanliness
+Indigo_NPS_Raw_Data,your on-board experience?,string,your on-board experience?
+Indigo_NPS_Raw_Data,Service experience– Contact center,float,Service experience– Contact center
+Indigo_NPS_Raw_Data,Did you receive your bag within 25 min o,float,Did you receive your bag within 25 min o
+Indigo_NPS_Raw_Data,Staff efficiency at the arrival desk,float,Staff efficiency at the arrival desk
+Indigo_NPS_Raw_Data,your arrival experience?,string,your arrival experience?
+Indigo_NPS_Raw_Data,Departure Delay,string,Departure Delay
+Indigo_NPS_Raw_Data,PNR,string,PNR
+Indigo_NPS_Raw_Data,Organization Name,string,Organization Name
+Indigo_NPS_Raw_Data,Delay In Flight,string,Delay In Flight
+Indigo_NPS_Raw_Data,Fast Forward Service,string,Fast Forward Service
+Indigo_NPS_Raw_Data,Equipment Type,string,Equipment Type
+Indigo_NPS_Raw_Data,Pax Type,string,Pax Type
+Indigo_NPS_Raw_Data,Arrival Date,string,Arrival Date
+Indigo_NPS_Raw_Data,Arrival Time,string,Arrival Time
+Indigo_NPS_Raw_Data,Pax Name: Account Name,string,Pax Name: Account Name
+Indigo_NPS_Raw_Data,Email,string,Email
+Indigo_NPS_Raw_Data,Mobile,integer,Mobile
+Indigo_NPS_Raw_Data,Gender,string,Gender
+Indigo_NPS_Raw_Data,DOB,string,DOB
+Indigo_NPS_Raw_Data,Departure Date Time,string,Departure Date Time
+Indigo_NPS_Raw_Data,Departure Time of Day,string,Departure Time of Day
+Indigo_NPS_Raw_Data,ETD,string,ETD
+Indigo_NPS_Raw_Data,Seat No.,string,Seat No.
+Indigo_NPS_Raw_Data,Arrival Date Time,string,Arrival Date Time
+Indigo_NPS_Raw_Data,Arrival Time of Day,string,Arrival Time of Day
+Indigo_NPS_Raw_Data,ETA,string,ETA
+Indigo_NPS_Raw_Data,Actual Touch Down Time,string,Actual Touch Down Time
+Indigo_NPS_Raw_Data,Actual On Block Time,string,Actual On Block Time
+Indigo_NPS_Raw_Data,Actual Off Block Time,string,Actual Off Block Time
+Indigo_NPS_Raw_Data,Airborne Time,string,Airborne Time
+Indigo_NPS_Raw_Data,Domestic Flag,string,Domestic Flag
+Indigo_NPS_Raw_Data,International Flag (not in use),string,International Flag (not in use)
+Indigo_NPS_Raw_Data,Infant Indicator,float,Infant Indicator
+Indigo_NPS_Raw_Data,Departure Terminal,string,Departure Terminal
+Indigo_NPS_Raw_Data,Journey Type,string,Journey Type
+Indigo_NPS_Raw_Data,Is Moved,string,Is Moved
+Indigo_NPS_Raw_Data,Arrival Terminal,string,Arrival Terminal
+Indigo_NPS_Raw_Data,AC Reg Id,string,AC Reg Id
+Indigo_NPS_Raw_Data,Crew Base1(LDE),string,Crew Base1(LDE)
+Indigo_NPS_Raw_Data,Crew Base2(CA),string,Crew Base2(CA)
+Indigo_NPS_Raw_Data,Crew Base3(CA),string,Crew Base3(CA)
+Indigo_NPS_Raw_Data,Crew Base4(CA),string,Crew Base4(CA)
+Indigo_NPS_Raw_Data,Is Moved Date,string,Is Moved Date
+Indigo_NPS_Raw_Data,Total No Of Pax,integer,Total No Of Pax
+Indigo_NPS_Raw_Data,Meal Item,float,Meal Item
+Indigo_NPS_Raw_Data,Crew Name,string,Crew Name
+Indigo_NPS_Raw_Data,CrewName_CA2,string,CrewName_CA2
+Indigo_NPS_Raw_Data,CrewName_CA3,string,CrewName_CA3
+Indigo_NPS_Raw_Data,CrewName_CA4,string,CrewName_CA4
+Indigo_NPS_Raw_Data,IGA Code,string,IGA Code
+Indigo_NPS_Raw_Data,CrewIGACode_CA2,string,CrewIGACode_CA2
+Indigo_NPS_Raw_Data,CrewIGACode_CA3,string,CrewIGACode_CA3
+Indigo_NPS_Raw_Data,CrewIGACode_CA4,string,CrewIGACode_CA4
+Indigo_NPS_Raw_Data,Dependent Region,float,Dependent Region
+Indigo_NPS_Raw_Data,Language,string,Language
+Indigo_NPS_Raw_Data,Is Reminder Sent,string,Is Reminder Sent
+Indigo_NPS_Raw_Data,Survey Invitation__c ID,string,Survey Invitation__c ID
+Indigo_NPS_Raw_Data,Promotors,integer,Promotors
+Indigo_NPS_Raw_Data,Passive,integer,Passive
+Indigo_NPS_Raw_Data,Detractors,integer,Detractors
+Indigo_NPS_Raw_Data,Channels,string,Channels
+Indigo_NPS_Raw_Data,Device,string,Device
+Indigo_NPS_Raw_Data,Device Name,string,Device Name
+Indigo_NPS_Raw_Data,Browser,string,Browser
+Indigo_NPS_Raw_Data,User Agent,string,User Agent
+Indigo_NPS_Raw_Data,ABC01,integer,ABC01
+Indigo_NPS_Raw_Data,Are you Travelling,float,Are you Travelling
+Indigo_NPS_Raw_Data,Mode of your return journey,float,Mode of your return journey
+Indigo_NPS_Raw_Data,CaptainName,string,CaptainName
+Indigo_NPS_Raw_Data,CaptainBase,string,CaptainBase
+Indigo_NPS_Raw_Data,CaptainIGACode,string,CaptainIGACode
+Indigo_NPS_Raw_Data,International Flag,string,International Flag
+Indigo_NPS_Raw_Data,Inflight Entertainment Experience,float,Inflight Entertainment Experience
+Indigo_NPS_Raw_Data,Station Type,string,Station Type
+Indigo_NPS_Raw_Data,Metro/Non-Metro Bifurcation,string,Metro/Non-Metro Bifurcation
+Indigo_NPS_Raw_Data,IFS Region,string,IFS Region
+Indigo_NPS_Raw_Data,FlightDuration,integer,FlightDuration
+Indigo_NPS_Raw_Data,AOCS Region Departure 1,string,AOCS Region Departure 1
+Indigo_NPS_Raw_Data,AOCS Region Arrival 1,string,AOCS Region Arrival 1
+Indigo_NPS_Raw_Data,Survey: Name,string,Survey: Name

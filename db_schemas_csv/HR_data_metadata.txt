@@ -1,0 +1,24 @@
+Column name	Column description
+--------------------------------
+Req Id	THis is Job requisition ID
+IGA	THis is employee ID of Indigo employees
+Name	EMployee name
+Base	EMployee base location
+Designation	EMployee designation
+Applicant's Function	Application main function
+IJP End Date	Close date of job posting
+Email id	
+Phone No	
+DOB	Date of birth
+Age (As on the last date)	Employee age
+DOJ	Date of joining 
+Months in IndiGo	
+Date of Release	
+Total Flying Expeirence (In IndiGo)	
+COC	
+Aircraft type	
+Eligibility Check as per HR	
+Message	This is message from from HR about the employee
+Preferred Location 1	Employee's preferred location1, location2, location3
+Preferred Location 2	
+Preferred Location 3

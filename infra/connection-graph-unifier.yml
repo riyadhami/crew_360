@@ -1,0 +1,14 @@
+$schema: https://azuremlschemas.azureedge.net/latest/customConnection.schema.json
+name: indigo-kg-unifier
+type: custom
+target: https://indigo-kg-unifier.proudocean-a4621ff3.westus2.azurecontainerapps.io/score
+metadata:
+  endpoint: https://indigo-kg-unifier.proudocean-a4621ff3.westus2.azurecontainerapps.io
+  health_endpoint: https://indigo-kg-unifier.proudocean-a4621ff3.westus2.azurecontainerapps.io/health
+  score_endpoint: https://indigo-kg-unifier.proudocean-a4621ff3.westus2.azurecontainerapps.io/score
+  description: Graph unification agent that merges multiple knowledge graphs
+  example_request: '{"graph1": "CLMS_concept_graph.json", "graph2": "CrewPortal_concept_graph.json"}'
+  agent_type: knowledge_graph_unifier
+  deployment_type: azure_container_apps
+  type: REST_API
+  category: Knowledge_Graph

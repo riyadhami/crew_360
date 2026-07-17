@@ -1,0 +1,79 @@
+# ============================================
+# Development Dependencies
+# ============================================
+# Install with: pip install -r requirements-dev.txt
+
+# First install main dependencies
+-r requirements.txt
+
+# ============================================
+# Testing
+# ============================================
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+pytest-xdist>=3.5.0  # Parallel test execution
+
+# ============================================
+# Code Quality and Linting
+# ============================================
+black>=24.0.0          # Code formatter
+ruff>=0.2.0            # Fast linter
+mypy>=1.8.0            # Static type checker
+pylint>=3.0.0          # Comprehensive linter
+flake8>=7.0.0          # Style guide enforcement
+isort>=5.13.0          # Import sorting
+
+# ============================================
+# Type Stubs
+# ============================================
+types-requests>=2.31.0
+types-Flask>=1.1.6
+types-setuptools>=69.0.0
+
+# ============================================
+# Documentation
+# ============================================
+sphinx>=7.2.0
+sphinx-rtd-theme>=2.0.0
+myst-parser>=2.0.0     # Markdown support for Sphinx
+
+# ============================================
+# Debugging and Profiling
+# ============================================
+ipdb>=0.13.13          # IPython debugger
+ipython>=8.20.0        # Enhanced Python shell
+pdbpp>=0.10.3          # Better pdb
+py-spy>=0.3.14         # Sampling profiler
+
+# ============================================
+# Code Coverage
+# ============================================
+coverage[toml]>=7.4.0
+coverage-badge>=1.1.0
+
+# ============================================
+# Pre-commit Hooks
+# ============================================
+pre-commit>=3.6.0
+
+# ============================================
+# Security
+# ============================================
+bandit>=1.7.6          # Security linter
+safety>=3.0.0          # Dependency vulnerability scanner
+
+# ============================================
+# Build and Packaging
+# ============================================
+build>=1.0.3
+twine>=5.0.0
+setuptools>=69.0.0
+wheel>=0.42.0
+
+# ============================================
+# Utilities
+# ============================================
+python-dotenv-cli>=0.1.0  # CLI for .env files
+rich>=13.7.0              # Beautiful terminal output

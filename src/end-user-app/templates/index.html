@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KG Inference Agent</title>
+  <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --card: #1c2333;
+      --card-hover: #222b3a;
+      --accent: #4361ee;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --border: #30363d;
+      --green: #2ecc71;
+      --orange: #e67e22;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --pink: #ec4899;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ───────────────────────────────── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header span { font-size: .82rem; color: var(--muted); }
+    .backend-toggle {
+      margin-left: auto; display: flex; align-items: center; gap: 0;
+      border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+      margin-right: 14px;
+    }
+    .backend-toggle button {
+      padding: 5px 14px; font-size: .72rem; font-weight: 600;
+      border: none; cursor: pointer; color: var(--muted);
+      background: transparent; transition: background .15s, color .15s;
+    }
+    .backend-toggle button:hover { background: var(--card-hover); color: var(--text); }
+    .backend-toggle button.active { background: var(--accent); color: #fff; }
+    .header-tabs {
+      display: flex; gap: 0;
+      border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+    }
+    .header-tabs a {
+      padding: 6px 16px; font-size: .78rem; font-weight: 600;
+      text-decoration: none; color: var(--muted);
+      background: transparent; transition: background .15s, color .15s;
+    }
+    .header-tabs a:hover { background: var(--card-hover); color: var(--text); }
+    .header-tabs a.active {
+      background: var(--accent); color: #fff;
+    }
+
+    /* ── Main split layout ────────────────────── */
+    .main-layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .left-panel {
+      flex: 0 0 55%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .splitter {
+      width: 5px;
+      cursor: col-resize;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+    .splitter:hover, .splitter.active { background: var(--accent); }
+
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
+      min-height: 0;
+    }
+
+    /* ── Query bar ────────────────────────────── */
+    .query-section {
+      padding: 20px 20px 16px;
+      flex-shrink: 0;
+    }
+    .query-bar {
+      display: flex;
+      gap: 10px;
+    }
+    .query-bar input {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: .95rem;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .query-bar input::placeholder { color: var(--muted); }
+    .query-bar input:focus { border-color: var(--accent); }
+    .query-bar button {
+      padding: 12px 24px;
+      font-size: .9rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity .2s;
+      white-space: nowrap;
+    }
+    .query-bar button:hover { opacity: .85; }
+    .query-bar button:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Chat content (scrollable) ────────────── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 20px 40px;
+    }
+
+    /* ── Iteration header ─────────────────────── */
+    .iter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: .82rem;
+    }
+    .iter-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    .iter-dot.running { background: var(--orange); animation: pulse 1s infinite; }
+    .iter-dot.done { background: var(--green); }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+    .iter-time { color: var(--muted); }
+
+    /* ── Step tiles ────────────────────────────── */
+    .step-tile {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      animation: slideIn .3s ease;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      cursor: pointer;
+      gap: 10px;
+      user-select: none;
+      transition: background .15s;
+    }
+    .step-header:hover { background: var(--card-hover); }
+
+    .step-num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-info { flex: 1; min-width: 0; }
+    .step-tool {
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--cyan);
+      margin-bottom: 2px;
+    }
+    .step-summary {
+      font-size: .8rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .step-badge {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .step-chevron {
+      color: var(--muted);
+      font-size: .85rem;
+      transition: transform .2s;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .step-tile.open .step-chevron { transform: rotate(180deg); }
+
+    .step-detail {
+      display: none;
+      padding: 0 14px 12px 50px;
+      font-size: .78rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .step-tile.open .step-detail { display: block; }
+    .step-detail pre {
+      background: var(--bg);
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: .75rem;
+      margin-top: 6px;
+    }
+    .step-detail .duplicate-note {
+      color: var(--orange);
+      font-style: italic;
+    }
+
+    /* ── Badge colours by tool type ───────────── */
+    .badge-schema       { background: #1e3a5f; color: #60a5fa; }
+    .badge-search       { background: #3b1f5e; color: #c084fc; }
+    .badge-concept      { background: #1a3d2e; color: #4ade80; }
+    .badge-table        { background: #3b2f1a; color: #fbbf24; }
+    .badge-trace        { background: #3b1a2e; color: #f472b6; }
+    .badge-detail       { background: #1a3d3d; color: #2dd4bf; }
+    .badge-path         { background: #2d1a3b; color: #a78bfa; }
+    .badge-cross        { background: #3b2d1a; color: #fb923c; }
+    .badge-query        { background: #1a2d3b; color: #38bdf8; }
+    .badge-default      { background: #2d2d2d; color: #9ca3af; }
+
+    /* ── Answer card ──────────────────────────── */
+    .answer-card {
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 18px;
+      display: none;
+    }
+    .answer-card.visible { display: block; animation: slideIn .4s ease; }
+    .answer-label {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .answer-body h3 {
+      margin: 14px 0 5px;
+      font-size: .9rem;
+      color: var(--cyan);
+    }
+    .answer-body h3:first-child { margin-top: 0; }
+    .answer-body p { margin: 4px 0 8px; line-height: 1.5; color: var(--text); font-size: .88rem; }
+    .answer-body ul, .answer-body ol { margin: 4px 0 10px 18px; font-size: .88rem; }
+    .answer-body li { margin-bottom: 3px; line-height: 1.45; }
+    .answer-body code {
+      background: var(--bg);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: .85em;
+      color: var(--cyan);
+    }
+    .answer-body pre {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      font-size: .8rem;
+      line-height: 1.45;
+      margin: 6px 0 14px;
+    }
+    .answer-body table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 14px;
+      font-size: .82rem;
+    }
+    .answer-body th, .answer-body td {
+      border: 1px solid var(--border);
+      padding: 7px 10px;
+      text-align: left;
+    }
+    .answer-body th { background: var(--bg); font-weight: 600; color: var(--cyan); }
+
+    /* ── Graph panel ──────────────────────────── */
+    .graph-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .graph-title {
+      font-size: .95rem;
+      font-weight: 600;
+    }
+    .graph-stats {
+      font-size: .78rem;
+      color: var(--muted);
+      flex: 1;
+    }
+    .graph-toolbar button {
+      padding: 5px 12px;
+      font-size: .75rem;
+      font-weight: 600;
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .graph-toolbar button:hover { background: var(--card-hover); }
+    .graph-toolbar button.active-toggle { background: var(--accent); border-color: var(--accent); }
+
+    .graph-legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 16px;
+      font-size: .72rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    .legend-shape {
+      font-size: .9rem;
+      line-height: 1;
+    }
+    .legend-sep {
+      color: var(--border);
+      font-size: .9rem;
+    }
+
+    #graphCanvas {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .graph-empty {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: var(--muted);
+      font-size: .88rem;
+      pointer-events: none;
+    }
+    .graph-empty .icon { font-size: 2.5rem; margin-bottom: 10px; opacity: .4; }
+
+    /* ── Responsive ───────────────────────────── */
+    @media (max-width: 900px) {
+      .main-layout { flex-direction: column; }
+      .left-panel { flex: 0 0 50% !important; }
+      .splitter { width: auto; height: 5px; cursor: row-resize; }
+      .right-panel { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Knowledge Graph Inference Agent</h1>
+  <span>— ReAct agent exploring the unified KG</span>
+  <div class="backend-toggle" id="backendToggle">
+    <button data-backend="neo4j">Neo4j</button>
+    <button data-backend="cosmos" class="active">Cosmos DB</button>
+  </div>
+  <div class="header-tabs">
+    <a href="/" class="active">Inference Agent</a>
+    <a href="/basic">Basic Agent</a>
+    <a href="/advanced">Tree Inference</a>
+    <a href="/data">Data Retrieval</a>
+  </div>
+</header>
+
+<div class="main-layout">
+  <!-- ═══ Left: Chat ═══ -->
+  <div class="left-panel" id="leftPanel">
+    <section class="query-section">
+      <form class="query-bar" id="queryForm">
+        <input type="text" id="queryInput" placeholder="Ask about crew data — e.g. &quot;Which tables store crew leave balances?&quot;" autocomplete="off" />
+        <button type="submit" id="submitBtn">Run Agent</button>
+      </form>
+    </section>
+    <section class="content" id="content"></section>
+  </div>
+
+  <!-- ═══ Splitter ═══ -->
+  <div class="splitter" id="splitter"></div>
+
+  <!-- ═══ Right: Graph ═══ -->
+  <div class="right-panel" id="rightPanel">
+    <div class="graph-toolbar">
+      <span class="graph-title">Knowledge Graph</span>
+      <span class="graph-stats" id="graphStats">0 nodes · 0 edges</span>
+      <button id="fitBtn" title="Fit graph to view">&#8862; Fit</button>
+      <button id="physicsBtn" title="Toggle physics simulation" class="active-toggle">&#9889; Physics</button>
+    </div>
+    <div class="graph-legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#4361ee"></span> CLMS</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#2ecc71"></span> CrewPortal</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#a855f7"></span> IJP</span>
+      <span class="legend-sep">|</span>
+      <span class="legend-item"><span class="legend-shape">&#9670;</span> Concept</span>
+      <span class="legend-item"><span class="legend-shape">&#9632;</span> Table</span>
+    </div>
+    <div id="graphCanvas">
+      <div class="graph-empty" id="graphEmpty">
+        <div class="icon">&#128269;</div>
+        Run a query to watch the knowledge graph<br>build in real-time
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   Backend toggle (Neo4j / Cosmos DB)
+   ══════════════════════════════════════════════════════════════ */
+(function initBackendToggle() {
+  const toggle = document.getElementById('backendToggle');
+  const saved = localStorage.getItem('kg_backend') || 'cosmos';
+  toggle.querySelectorAll('button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.backend === saved);
+    btn.addEventListener('click', () => {
+      toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      localStorage.setItem('kg_backend', btn.dataset.backend);
+    });
+  });
+})();
+function getBackend() {
+  return localStorage.getItem('kg_backend') || 'cosmos';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Chat panel logic (left)
+   ══════════════════════════════════════════════════════════════ */
+const form      = document.getElementById('queryForm');
+const input     = document.getElementById('queryInput');
+const submitBtn = document.getElementById('submitBtn');
+const content   = document.getElementById('content');
+
+let stepCounter = 0;
+let startTime   = 0;
+let iterEl      = null;
+let timerHandle = null;
+
+const BADGE_MAP = {
+  schema:           ['SCHEMA',          'badge-schema'],
+  list_concepts:    ['CONCEPTS',        'badge-concept'],
+  concept_links:    ['CONCEPT LINKS',   'badge-concept'],
+  node_details:     ['NODE DETAIL',     'badge-detail'],
+  list_tables:      ['TABLES',          'badge-table'],
+  search:           ['SEARCH',          'badge-search'],
+  find_columns:     ['COLUMNS',         'badge-search'],
+  path_between:     ['PATH',            'badge-path'],
+  subgraph:         ['SUBGRAPH',        'badge-path'],
+  shared_concepts:  ['SHARED CONCEPTS', 'badge-concept'],
+  database_summary: ['DB SUMMARY',      'badge-table'],
+  cross_db_edges:   ['CROSS-DB',        'badge-cross'],
+  trace_cross_db:   ['CROSS-DB TRACE',  'badge-trace'],
+  query:            ['CYPHER',          'badge-query'],
+};
+
+function getBadge(toolName) {
+  return BADGE_MAP[toolName] || [toolName.toUpperCase().replace(/_/g, ' '), 'badge-default'];
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const q = input.value.trim();
+  if (!q) return;
+  runQuery(q);
+});
+
+async function runQuery(query) {
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Running\u2026';
+  content.innerHTML = '';
+  stepCounter = 0;
+  startTime = performance.now();
+  iterEl = null;
+  if (timerHandle) clearInterval(timerHandle);
+  resetGraph();
+
+  try {
+    const resp = await fetch('/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, backend: getBackend() }),
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let pendingCall = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const ev = JSON.parse(line.slice(6));
+
+        if (ev.type === 'iteration') {
+          renderIterHeader(ev);
+        } else if (ev.type === 'tool_call') {
+          pendingCall = ev;
+        } else if (ev.type === 'tool_result') {
+          stepCounter++;
+          renderStep(stepCounter, pendingCall, ev);
+          if (ev.graph) addGraphHints(ev.graph);
+          pendingCall = null;
+        } else if (ev.type === 'done') {
+          finalizeIter(ev);
+          renderAnswer(ev);
+        } else if (ev.type === 'error') {
+          renderError(ev);
+        }
+      }
+    }
+  } catch (err) {
+    renderError({ message: err.message });
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Run Agent';
+    if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+  }
+}
+
+/* ── Iteration header with live timer ────────── */
+function renderIterHeader(ev) {
+  if (iterEl) {
+    const dot = iterEl.querySelector('.iter-dot');
+    dot.classList.remove('running');
+    dot.classList.add('done');
+    if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+  }
+  iterEl = document.createElement('div');
+  iterEl.className = 'iter-header';
+  iterEl.innerHTML = `
+    <div><span class="iter-dot running"></span> Iteration ${ev.number}/${ev.max}</div>
+    <div class="iter-time">0.0s</div>
+  `;
+  content.appendChild(iterEl);
+  const timeEl = iterEl.querySelector('.iter-time');
+  const t0 = performance.now();
+  timerHandle = setInterval(() => {
+    timeEl.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's';
+  }, 100);
+}
+
+function finalizeIter(ev) {
+  if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+  if (iterEl) {
+    const dot = iterEl.querySelector('.iter-dot');
+    dot.classList.remove('running');
+    dot.classList.add('done');
+    const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+    iterEl.querySelector('.iter-time').textContent = elapsed + 's total';
+  }
+}
+
+/* ── Collapsible step tile ────────────────────── */
+function renderStep(num, callEv, resultEv) {
+  const [badgeLabel, badgeClass] = getBadge(callEv ? callEv.name : 'unknown');
+  const toolName = callEv ? callEv.name : 'unknown';
+
+  let summary = '';
+  if (callEv && callEv.args && Object.keys(callEv.args).length) {
+    summary = Object.entries(callEv.args).map(([k, v]) => {
+      const val = typeof v === 'string' ? v : JSON.stringify(v);
+      return `${k}: ${val}`;
+    }).join('  \u00b7  ');
+  }
+  if (resultEv.duplicate) summary = '[Duplicate \u2014 skipped]  ' + summary;
+
+  const tile = document.createElement('div');
+  tile.className = 'step-tile';
+  tile.innerHTML = `
+    <div class="step-header">
+      <div class="step-num">${num}</div>
+      <div class="step-info">
+        <div class="step-tool">${esc(toolName)}</div>
+        <div class="step-summary">${esc(summary)}</div>
+      </div>
+      <span class="step-badge ${badgeClass}">${badgeLabel}</span>
+      <span class="step-chevron">&#9660;</span>
+    </div>
+    <div class="step-detail">
+      ${callEv ? `<div style="margin-bottom:8px"><strong>Call:</strong> <code>${esc(toolName)}(${Object.entries(callEv.args || {}).map(([k, v]) => k + '=' + JSON.stringify(v)).join(', ')})</code></div>` : ''}
+      ${resultEv.duplicate ? '<div class="duplicate-note">\u26a0 Duplicate call \u2014 cached hint returned</div>' : ''}
+      <div><strong>Result:</strong></div>
+      <pre>${esc(resultEv.preview || '')}</pre>
+    </div>
+  `;
+  tile.querySelector('.step-header').addEventListener('click', () => tile.classList.toggle('open'));
+  content.appendChild(tile);
+  tile.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ── Final answer card ────────────────────────── */
+function renderAnswer(ev) {
+  const card = document.createElement('div');
+  card.className = 'answer-card visible';
+  const iters = ev.iterations;
+  const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+  let label = `Final Answer \u2014 ${iters} iteration${iters > 1 ? 's' : ''}, ${elapsed}s`;
+  if (ev.warning) label += ` \u2014 \u26a0 ${ev.warning}`;
+
+  const answer = ev.answer || '';
+  let parsed = null;
+  try {
+    let raw = answer.trim();
+    if (raw.startsWith('```')) raw = raw.replace(/^```[a-z]*\n?/i, '').replace(/\n?```\s*$/, '');
+    parsed = JSON.parse(raw);
+  } catch {}
+  const bodyHTML = parsed ? renderJSON(parsed) : `<pre>${esc(answer)}</pre>`;
+  card.innerHTML = `<div class="answer-label">${esc(label)}</div><div class="answer-body">${bodyHTML}</div>`;
+  content.appendChild(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderError(ev) {
+  const div = document.createElement('div');
+  div.className = 'answer-card visible';
+  div.innerHTML = `<div class="answer-label" style="color:#ef4444">Error</div><p style="color:#f87171">${esc(ev.message)}</p>`;
+  content.appendChild(div);
+}
+
+/* ── Structured JSON renderer ─────────────────── */
+function renderJSON(obj) {
+  let html = '';
+  if (obj.original_query) html += `<h3>Query</h3><p>${esc(obj.original_query)}</p>`;
+  if (obj.reformulated_query) html += `<h3>Reformulated Query</h3><p>${esc(obj.reformulated_query)}</p>`;
+  if (obj.relevant_databases && obj.relevant_databases.length)
+    html += `<h3>Databases</h3><p>${obj.relevant_databases.map(d => `<code>${esc(d)}</code>`).join(', ')}</p>`;
+  if (obj.relevant_tables && obj.relevant_tables.length) {
+    html += `<h3>Relevant Tables</h3><table><tr><th>Table</th><th>Database</th><th>Role</th><th>Key Columns</th></tr>`;
+    for (const t of obj.relevant_tables) {
+      html += `<tr>
+        <td><code>${esc(t.table || t.name || '')}</code></td>
+        <td>${esc(t.database || '')}</td>
+        <td>${esc(t.role || '')}</td>
+        <td>${(t.key_columns || []).map(c => `<code>${esc(c)}</code>`).join(', ')}</td>
+      </tr>`;
+    }
+    html += '</table>';
+  }
+  if (obj.relevant_concepts && obj.relevant_concepts.length)
+    html += `<h3>Concepts</h3><ul>${obj.relevant_concepts.map(c => `<li>${esc(typeof c === 'string' ? c : JSON.stringify(c))}</li>`).join('')}</ul>`;
+  if (obj.query_plan && obj.query_plan.length) {
+    html += `<h3>Query Plan</h3><ol>`;
+    for (const s of obj.query_plan) {
+      if (typeof s === 'string') html += `<li>${esc(s)}</li>`;
+      else html += `<li><strong>${esc(s.step || '')}</strong>: ${esc(s.description || s.action || JSON.stringify(s))}</li>`;
+    }
+    html += '</ol>';
+  }
+  if (obj.join_hints && obj.join_hints.length)
+    html += `<h3>Join Hints</h3><ul>${obj.join_hints.map(h => `<li>${esc(typeof h === 'string' ? h : JSON.stringify(h))}</li>`).join('')}</ul>`;
+  if (obj.notes) {
+    const notes = Array.isArray(obj.notes) ? obj.notes : [obj.notes];
+    html += `<h3>Notes</h3><ul>${notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>`;
+  }
+  const rendered = new Set(['original_query','reformulated_query','relevant_databases','relevant_tables','relevant_concepts','query_plan','join_hints','notes']);
+  const extra = Object.keys(obj).filter(k => !rendered.has(k));
+  if (extra.length) {
+    const leftover = {};
+    extra.forEach(k => leftover[k] = obj[k]);
+    html += `<h3>Additional</h3><pre>${esc(JSON.stringify(leftover, null, 2))}</pre>`;
+  }
+  return html;
+}
+
+function esc(s) {
+  if (s == null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Splitter drag logic
+   ══════════════════════════════════════════════════════════════ */
+const splitter   = document.getElementById('splitter');
+const leftPanel  = document.getElementById('leftPanel');
+const rightPanel = document.getElementById('rightPanel');
+let isResizing   = false;
+
+splitter.addEventListener('mousedown', (e) => {
+  isResizing = true;
+  splitter.classList.add('active');
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isResizing) return;
+  const container = document.querySelector('.main-layout');
+  const rect = container.getBoundingClientRect();
+  const pct = ((e.clientX - rect.left) / rect.width) * 100;
+  if (pct > 25 && pct < 80) {
+    leftPanel.style.flex = `0 0 ${pct}%`;
+    rightPanel.style.flex = '1';
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (isResizing) {
+    isResizing = false;
+    splitter.classList.remove('active');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    if (network) network.fit({ animation: { duration: 300 } });
+  }
+});
+
+
+/* ══════════════════════════════════════════════════════════════
+   Graph panel logic (right) — vis.js Network
+   ══════════════════════════════════════════════════════════════ */
+
+const DB_COLORS = {
+  CLMS:       { main: '#4361ee', dark: '#1e3a5f', border: '#6d83f2' },
+  CrewPortal: { main: '#2ecc71', dark: '#1a3d2e', border: '#5fd99b' },
+  IJP:        { main: '#a855f7', dark: '#3b1f5e', border: '#c084fc' },
+};
+
+/* Build vis.js groups: {DB}_Concept, {DB}_Table, Unknown_* */
+const visGroups = {};
+for (const [db, c] of Object.entries(DB_COLORS)) {
+  visGroups[`${db}_Concept`] = {
+    shape: 'diamond', size: 20,
+    color: { background: c.main, border: c.border,
+             highlight: { background: c.main, border: '#fff' } },
+    font: { color: '#ffffff', size: 12, face: 'Segoe UI' },
+  };
+  visGroups[`${db}_Table`] = {
+    shape: 'box', size: 14,
+    color: { background: c.dark, border: c.main,
+             highlight: { background: c.dark, border: '#fff' } },
+    font: { color: '#ffffff', size: 11, face: 'Segoe UI' },
+  };
+}
+visGroups['Unknown_Concept'] = {
+  shape: 'diamond', size: 18,
+  color: { background: '#6b7280', border: '#9ca3af',
+           highlight: { background: '#6b7280', border: '#fff' } },
+  font: { color: '#ffffff', size: 12, face: 'Segoe UI' },
+};
+visGroups['Unknown_Table'] = {
+  shape: 'box', size: 12,
+  color: { background: '#374151', border: '#6b7280',
+           highlight: { background: '#374151', border: '#fff' } },
+  font: { color: '#ffffff', size: 11, face: 'Segoe UI' },
+};
+
+const graphNodes = new vis.DataSet();
+const graphEdges = new vis.DataSet();
+
+const networkOptions = {
+  groups: visGroups,
+  edges: {
+    color: { color: '#30363d88', highlight: '#4361ee' },
+    font: { color: '#c9d1d9', size: 9, strokeColor: '#0d1117', strokeWidth: 2,
+            face: 'Segoe UI', align: 'middle' },
+    arrows: { to: { enabled: true, scaleFactor: 0.4 } },
+    smooth: { type: 'continuous', roundness: 0.3 },
+    width: 1,
+    hoverWidth: 0.5,
+  },
+  physics: {
+    enabled: true,
+    solver: 'barnesHut',
+    barnesHut: {
+      gravitationalConstant: -3000,
+      centralGravity: 0.15,
+      springLength: 120,
+      springConstant: 0.02,
+      damping: 0.3,
+      avoidOverlap: 0.2,
+    },
+    stabilization: { iterations: 150, fit: true },
+  },
+  interaction: {
+    hover: true,
+    tooltipDelay: 200,
+    zoomView: true,
+    dragView: true,
+  },
+  layout: { improvedLayout: true },
+};
+
+let network = null;
+
+function initNetwork() {
+  const canvas = document.getElementById('graphCanvas');
+  network = new vis.Network(canvas, { nodes: graphNodes, edges: graphEdges }, networkOptions);
+  network.on('stabilizationIterationsDone', () => {
+    network.fit({ animation: { duration: 400 } });
+  });
+  /* Ensure vis.js picks up the actual container size after layout settles */
+  setTimeout(() => { network.redraw(); network.fit(); }, 200);
+}
+
+function resetGraph() {
+  graphNodes.clear();
+  graphEdges.clear();
+  nameToIds.clear();
+  const emptyEl = document.getElementById('graphEmpty');
+  if (emptyEl) emptyEl.style.display = 'none';
+  updateGraphStats();
+  if (network) network.fit();
+}
+
+/* ── Node-ID management ───────────────────────── */
+const nameToIds = new Map();  // name -> Set<nodeId>
+
+function makeId(name, database) {
+  return database ? `${database}__${name}` : `__${name}`;
+}
+
+function resolveId(name, database) {
+  if (database) return makeId(name, database);
+  const ids = nameToIds.get(name);
+  if (ids && ids.size === 1) return [...ids][0];
+  return makeId(name, '');
+}
+
+function getGroup(type, database) {
+  const t = (type === 'Concept') ? 'Concept' : 'Table';
+  const db = DB_COLORS[database] ? database : 'Unknown';
+  return `${db}_${t}`;
+}
+
+/* ── Add nodes + edges from a tool result ─────── */
+function addGraphHints(hints) {
+  if (!hints) return;
+  const newIds = [];
+
+  /* Nodes */
+  for (const n of (hints.nodes || [])) {
+    const id    = makeId(n.name, n.database);
+    const group = getGroup(n.type, n.database);
+    const label = n.database ? `${n.name}\n[${n.database}]` : n.name;
+
+    if (!nameToIds.has(n.name)) nameToIds.set(n.name, new Set());
+    nameToIds.get(n.name).add(id);
+
+    const isNew = !graphNodes.get(id);
+    graphNodes.update({
+      id, label, group,
+      title: `${n.type}: ${n.name}${n.database ? ' (' + n.database + ')' : ''}`,
+    });
+    if (isNew) newIds.push(id);
+
+    /* Upgrade: if we previously added __name (no DB) and now know the DB,
+       migrate edges from the unknown node to the known one and remove it. */
+    const unknownId = makeId(n.name, '');
+    if (n.database && unknownId !== id && graphNodes.get(unknownId)) {
+      graphEdges.get().forEach(e => {
+        const patch = {};
+        if (e.from === unknownId) patch.from = id;
+        if (e.to   === unknownId) patch.to   = id;
+        if (Object.keys(patch).length) graphEdges.update({ id: e.id, ...patch });
+      });
+      graphNodes.remove(unknownId);
+      nameToIds.get(n.name)?.delete(unknownId);
+    }
+  }
+
+  /* Edges */
+  for (const e of (hints.edges || [])) {
+    const fromId  = resolveId(e.source, e.source_db);
+    const toId    = resolveId(e.target, e.target_db);
+    const edgeId  = `${fromId}\u2192${e.label}\u2192${toId}`;
+    const crossDb = e.source_db && e.target_db && e.source_db !== e.target_db;
+
+    if (!graphEdges.get(edgeId)) {
+      graphEdges.add({
+        id: edgeId,
+        from: fromId,
+        to: toId,
+        label: (e.label || '').replace(/_/g, ' ').substring(0, 28),
+        dashes: crossDb,
+        color: crossDb ? { color: '#f59e0b88', highlight: '#f59e0b' } : undefined,
+        width: crossDb ? 1.5 : 1,
+      });
+    }
+  }
+
+  /* Brief highlight on new nodes */
+  if (newIds.length && network) {
+    network.selectNodes(newIds);
+    setTimeout(() => { try { network.unselectAll(); } catch {} }, 1200);
+    if (newIds.length > 3) {
+      setTimeout(() => network.fit({ animation: { duration: 400 } }), 300);
+    }
+  }
+
+  /* Make sure vis.js redraws after data changes */
+  if (network) { network.redraw(); }
+
+  updateGraphStats();
+}
+
+function updateGraphStats() {
+  const nc = graphNodes.length;
+  const ec = graphEdges.length;
+  document.getElementById('graphStats').textContent =
+    `${nc} node${nc !== 1 ? 's' : ''} \u00b7 ${ec} edge${ec !== 1 ? 's' : ''}`;
+}
+
+/* ── Toolbar buttons ──────────────────────────── */
+let physicsOn = true;
+
+document.getElementById('fitBtn').addEventListener('click', () => {
+  if (network) network.fit({ animation: { duration: 500 } });
+});
+
+document.getElementById('physicsBtn').addEventListener('click', () => {
+  physicsOn = !physicsOn;
+  if (network) network.setOptions({ physics: { enabled: physicsOn } });
+  document.getElementById('physicsBtn').classList.toggle('active-toggle', physicsOn);
+});
+
+/* ── Boot ─────────────────────────────────────── */
+initNetwork();
+</script>
+</body>
+</html>

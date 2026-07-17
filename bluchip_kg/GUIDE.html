@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BluChip 360 KG — Setup Guide</title>
+<style>
+  /* ── Reset & base ─────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #0f1117;
+    --surface:    #1a1d27;
+    --surface2:   #22263a;
+    --border:     #2e3350;
+    --indigo:     #6c63ff;
+    --indigo-dim: #3d3a7a;
+    --blue:       #4ea8de;
+    --green:      #4ade80;
+    --yellow:     #fbbf24;
+    --red:        #f87171;
+    --text:       #e2e8f0;
+    --muted:      #8892a4;
+    --code-bg:    #0d1117;
+    --radius:     10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  .page { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 240px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 28px 0;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo .brand {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--indigo);
+  }
+  .sidebar-logo .sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .nav-section {
+    padding: 6px 20px 2px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  .sidebar a {
+    display: block;
+    padding: 7px 20px;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar a:hover { color: var(--text); background: var(--surface2); }
+  .sidebar a.active { color: var(--indigo); border-left-color: var(--indigo); background: var(--surface2); }
+
+  /* Main content */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    max-width: 900px;
+    padding: 56px 48px 100px;
+  }
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  h1 {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #fff 30%, var(--indigo));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 40px;
+  }
+
+  h2 {
+    font-size: 21px;
+    font-weight: 700;
+    color: #fff;
+    margin: 52px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    background: var(--indigo);
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+    -webkit-text-fill-color: #fff;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--blue);
+    margin: 24px 0 8px;
+  }
+
+  p { margin-bottom: 12px; color: var(--text); }
+
+  /* ── Code blocks ──────────────────────────────────────────────────────── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 14px 0;
+    position: relative;
+  }
+
+  pre code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #c9d1d9;
+  }
+
+  .lang-tag {
+    position: absolute;
+    top: 8px; right: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: monospace;
+  }
+
+  /* Inline code */
+  code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12.5px;
+    color: var(--blue);
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; }
+
+  /* Syntax colouring (manual) */
+  .kw  { color: #ff7b72; }
+  .cm  { color: #8b949e; }
+  .st  { color: #a5d6ff; }
+  .fn  { color: #d2a8ff; }
+  .nu  { color: #79c0ff; }
+  .op  { color: #ffa657; }
+
+  /* ── Cards / callouts ─────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+
+  .callout {
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin: 16px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 14px;
+  }
+  .callout-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info  { background: #1a2a3a; border: 1px solid #2a4a6a; }
+  .callout.warn  { background: #2a2200; border: 1px solid #5a4a00; }
+  .callout.tip   { background: #0f2a1a; border: 1px solid #1a5a2a; }
+
+  /* ── Tables ───────────────────────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13.5px;
+  }
+  th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface); }
+
+  /* ── Badges ───────────────────────────────────────────────────────────── */
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge-purple  { background: #3d2e6e; color: #c4b5fd; }
+  .badge-blue    { background: #1e3a5f; color: #7dd3fc; }
+  .badge-green   { background: #14532d; color: #86efac; }
+  .badge-yellow  { background: #451a03; color: #fcd34d; }
+  .badge-gold    { background: #3d2e00; color: #fbbf24; }
+  .badge-silver  { background: #1e2a3a; color: #94a3b8; }
+
+  /* ── Graph diagram ────────────────────────────────────────────────────── */
+  .ontology-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  .ontology-diagram pre {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* ── File tree ────────────────────────────────────────────────────────── */
+  .filetree {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    margin: 16px 0;
+  }
+  .ft-dir   { color: #79c0ff; font-weight: 700; }
+  .ft-file  { color: #c9d1d9; }
+  .ft-note  { color: #8b949e; }
+  .ft-entry { color: #ff7b72; }
+
+  /* ── Step indicator ───────────────────────────────────────────────────── */
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 12px;
+  }
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--indigo), #9b8cff);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .step-title { font-size: 17px; font-weight: 700; color: #fff; }
+  .step-sub   { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  .step-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin: 20px 0;
+  }
+
+  /* ── Cheat sheet ──────────────────────────────────────────────────────── */
+  .cheatsheet {
+    background: var(--code-bg);
+    border: 1px solid var(--indigo-dim);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin: 20px 0;
+  }
+  .cheatsheet-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--indigo);
+    margin-bottom: 14px;
+  }
+
+  /* ── Divider ──────────────────────────────────────────────────────────── */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* ── Scrollbar ────────────────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════  SIDEBAR  ═══════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">BluChip KG</div>
+    <div class="sub">Member 360 Knowledge Graph</div>
+  </div>
+
+  <div class="nav-section">Architecture</div>
+  <a href="#overview">What this builds</a>
+  <a href="#ontology">Ontology</a>
+  <a href="#pipeline">Pipeline</a>
+  <a href="#files">File structure</a>
+  <a href="#queries">Query layer</a>
+
+  <div class="nav-section">Setup Guide</div>
+  <a href="#step1">1 · Prerequisites</a>
+  <a href="#step2">2 · Navigate</a>
+  <a href="#step3">3 · Virtual env</a>
+  <a href="#step4">4 · Dependencies</a>
+  <a href="#step5">5 · Azure login</a>
+  <a href="#step6">6 · Provision Azure</a>
+  <a href="#step7">7 · Verify .env</a>
+  <a href="#step8">8 · Static nodes</a>
+  <a href="#step9">9 · Members</a>
+  <a href="#step10">10 · Verify portal</a>
+  <a href="#step11">11 · Query Python</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="#flags">CLI flags</a>
+  <a href="#cheatsheet">Cheat sheet</a>
+</nav>
+
+<!-- ═══════════════════════  MAIN  ══════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- Hero -->
+  <h1>BluChip 360 Knowledge Graph</h1>
+  <p class="hero-sub">
+    IndiGo BluChip member intelligence — setup guide &amp; architecture reference
+  </p>
+
+  <!-- ──────────────────────────────────────────────────────────────────────
+       SECTION: ARCHITECTURE
+  ─────────────────────────────────────────────────────────────────────────── -->
+
+  <h2 id="overview"><span class="section-num">◆</span> What this builds</h2>
+
+  <p>
+    A <strong>persistent member 360 knowledge graph</strong> stored in Azure Cosmos DB (Gremlin API).
+    It turns flat booking data, partnership earn records, and behavioural attributes into a
+    connected graph that agents and LLMs can traverse to understand a BluChip member holistically.
+  </p>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>Question an agent can answer</th><th>How the graph answers it</th></tr></thead>
+      <tbody>
+        <tr><td>What tier is this member and what benefits do they have?</td><td><code>Member → BELONGS_TO_TIER → Tier</code></td></tr>
+        <tr><td>Are they a high-frequency flyer or a one-time visitor?</td><td><code>Member.flyer_frequency</code></td></tr>
+        <tr><td>Which partners do they earn BluChips with?</td><td><code>Member → EARNS_POINTS_FROM → PartnerTransaction → WITH_PARTNER → Partner</code></td></tr>
+        <tr><td>Do they prefer DEL→BOM or BOM→HYD?</td><td><code>Member → PREFERS_ROUTE → Route</code></td></tr>
+        <tr><td>Are they a business or leisure traveller?</td><td><code>Member.travel_purpose</code></td></tr>
+        <tr><td>What fare type do they mostly book?</td><td><code>Member → USES_FARE_TYPE → FareType</code></td></tr>
+        <tr><td>What add-ons does this member typically buy?</td><td><code>Member → MADE_BOOKING → Booking → CONTAINS_SEGMENT → Segment → PURCHASED_ADDON → AddOn</code></td></tr>
+        <tr><td>Show me all flights this member took last year</td><td><code>Member → MADE_BOOKING → Booking → CONTAINS_SEGMENT → Segment.flight_date</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <span>The graph is <strong>built once</strong> and stored permanently in Cosmos DB.
+    Agents only ever <em>read</em> it — nothing is created or destroyed during a query.</span>
+  </div>
+
+  <!-- ── Ontology ────────────────────────────────────────────────────────── -->
+  <h2 id="ontology"><span class="section-num">◆</span> Ontology</h2>
+
+  <p>Ten vertex types, eleven edge types. Transactional / event-driven design — individual Booking, Segment, PartnerTransaction, and AddOn nodes replace the old aggregated TravelProfile. Behavioural summaries are properties on the Member vertex; the full transaction history lives in the graph.</p>
+
+  <div class="ontology-diagram">
+    <pre><code><span class="cm">── Vertex Labels ──────────────────────────────────────────────────────</span>
+
+  <span class="op">Member</span>               FFN ID · demographics · spending_segment · travel_purpose · flyer_frequency
+  <span class="op">Tier</span>                 Blu 3 (entry) / Blu 2 / Blu 1 (top) · spend+flight thresholds · earn rates · perks
+  <span class="op">Booking</span>              Per PNR · booking_date · channel · fare_type · status · trip_type · total_fare
+  <span class="op">Segment</span>              Per flight leg · flight_number · date · seat · meal · baggage · travel_purpose
+  <span class="op">PartnerTransaction</span>   Individual earn event · bluchips_earned · spend_amount · activity_date
+  <span class="op">AddOn</span>                Catalog node · XL Seat / Fast Forward / Meal / Baggage / 6E Prime …
+  <span class="op">Partner</span>              19 partners · earn rate · category (FINANCIAL / NON_FINANCIAL)
+  <span class="op">Route</span>                Origin→Destination pair · shared across members · DOM / INTL
+  <span class="op">Airport</span>              15 airports · METRO / LEISURE / INTERNATIONAL · region
+  <span class="op">FareType</span>             8 fare classes: SAVER / FLEXI / CORPORATE / SME / SUPER6E / STRETCH / PROMO / RETURN_FAMILY
+  <span class="op">Airport</span>         Code · city · type (METRO / LEISURE / INTERNATIONAL)
+  <span class="op">FareType</span>        SAVER / FLEXI / CORPORATE / SME / SUPER6E / STRETCH / PROMO …
+
+
+<span class="cm">── Edge Labels ────────────────────────────────────────────────────────</span>
+
+  (Member)             ──[<span class="kw">BELONGS_TO_TIER</span>   {bluchips_balance, qualifying_spend, qualifying_flights, tier_since}]──▶ (Tier)
+  (Member)             ──[<span class="kw">MADE_BOOKING</span>                                                                          ]──▶ (Booking)
+  (Booking)            ──[<span class="kw">CONTAINS_SEGMENT</span>                                                                      ]──▶ (Segment)
+  (Segment)            ──[<span class="kw">FLIES_ON</span>                                                                              ]──▶ (Route)
+  (Route)              ──[<span class="kw">ORIGIN_AIRPORT</span>                                                                        ]──▶ (Airport)
+  (Route)              ──[<span class="kw">DEST_AIRPORT</span>                                                                          ]──▶ (Airport)
+  (Segment)            ──[<span class="kw">PURCHASED_ADDON</span>                                                                       ]──▶ (AddOn)
+  (Member)             ──[<span class="kw">EARNS_POINTS_FROM</span>                                                                     ]──▶ (PartnerTransaction)
+  (PartnerTransaction) ──[<span class="kw">WITH_PARTNER</span>                                                                          ]──▶ (Partner)
+  (Member)             ──[<span class="kw">USES_FARE_TYPE</span>    {usage_count, pct_of_bookings}                                      ]──▶ (FareType)
+  (Member)             ──[<span class="kw">PREFERS_ROUTE</span>     {trip_count, last_flown}                                            ]──▶ (Route)
+  (Route)  ──[<span class="kw">ARRIVES_AT</span>                                                 ]──▶ (Airport)</code></pre>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">ℹ️</span>
+    <span>Tiers are based on <strong>flight spend + flight count</strong> in the last 12 months — <em>not</em> on BluChip balance.
+    BluChips balance is a separate redeemable currency that accumulates independently of tier status.</span>
+  </div>
+
+  <h3>Tier thresholds &amp; earn rates <span style="font-size:11px;color:var(--muted);font-weight:400">(scraped from goindigo.in, June 2026)</span></h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Tier</th>
+        <th>Upgrade requirement</th>
+        <th>Retention</th>
+        <th>Base earn on flights</th>
+        <th>Max earn (with channel bonus)</th>
+        <th>6E Prime passes</th>
+        <th>Add-on discount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge badge-blue">Blu 3</span><br><small style="color:var(--muted)">Entry · no expiry</small></td>
+        <td>N/A — all members start here</td>
+        <td>N/A — never lapses</td>
+        <td>8 BluChips / ₹100</td>
+        <td>12 / ₹100 <small style="color:var(--muted)">(+4 channel bonus)</small></td>
+        <td>0</td>
+        <td>10% off</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-silver">Blu 2</span><br><small style="color:var(--muted)">Mid · 365-day validity</small></td>
+        <td>₹1,00,000 spend + min <strong>4 flights</strong> in 12 months</td>
+        <td>Same as upgrade</td>
+        <td>8 + 2 tier bonus = <strong>10</strong> / ₹100</td>
+        <td>14 / ₹100 <small style="color:var(--muted)">(+4 channel bonus)</small></td>
+        <td>20 passes</td>
+        <td>20% off</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-gold">Blu 1</span><br><small style="color:var(--muted)">Top · 365-day validity</small></td>
+        <td>₹2,00,000 spend + min <strong>8 flights</strong> in 12 months</td>
+        <td>Same as upgrade</td>
+        <td>8 + 4 tier bonus = <strong>12</strong> / ₹100</td>
+        <td>16 / ₹100 <small style="color:var(--muted)">(+4 channel bonus)</small></td>
+        <td>40 passes</td>
+        <td>30% off</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:13px;color:var(--muted)">
+    <strong>Channel bonus:</strong> +4 BluChips / ₹100 on top of the above when booking via IndiGo website or app (applies to all tiers).<br>
+    <strong>BluChips validity:</strong> As long as the member is programme-active in the last 24 months — no arbitrary expiry date.<br>
+    <strong>Nominees:</strong> Up to 5 nominees allowed at all tiers.
+  </p>
+
+  <h3>Partner earn rates</h3>
+  <table>
+    <thead><tr><th>Partner</th><th>Category</th><th>BluChips earned</th><th>Network</th></tr></thead>
+    <tbody>
+      <tr><td>Axis Bank</td><td><span class="badge badge-purple">Financial</span></td><td>23 per ₹100 spent</td><td>Mastercard</td></tr>
+      <tr><td>SBI Card</td><td><span class="badge badge-purple">Financial</span></td><td>23 per ₹100 spent</td><td>Mastercard</td></tr>
+      <tr><td>IDFC First Bank</td><td><span class="badge badge-purple">Financial</span></td><td>22 per ₹100 spent</td><td>Visa</td></tr>
+      <tr><td>Kotak Mahindra</td><td><span class="badge badge-purple">Financial</span></td><td>21 per ₹100 spent</td><td>Visa</td></tr>
+      <tr><td>Commbitz / iPlanet</td><td><span class="badge badge-green">Non-Financial</span></td><td>30 per ₹100 spent</td><td>—</td></tr>
+      <tr><td>Healthians</td><td><span class="badge badge-green">Non-Financial</span></td><td>12 per ₹100 spent</td><td>—</td></tr>
+      <tr><td>Duty Free / AirportZo</td><td><span class="badge badge-green">Non-Financial</span></td><td>5 per ₹100 spent</td><td>—</td></tr>
+      <tr><td>Swiggy / EazyDiner</td><td><span class="badge badge-green">Non-Financial</span></td><td>1 per ₹250 spent</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Pipeline ───────────────────────────────────────────────────────── -->
+  <h2 id="pipeline"><span class="section-num">◆</span> Pipeline</h2>
+
+  <p>There are two completely separate phases. The build phase runs once. The query phase runs on every agent call.</p>
+
+  <div class="card">
+    <h3>Build phase (run once)</h3>
+    <pre><code>Static reference data (tiers, partners, fare types, airports)
+          │
+          ▼  setup_azure.py  ──  provisions Cosmos DB account + graph container
+          │
+          ▼  graph_builder.py --static-only  ──  loads reference vertices
+          │
+          ▼  synthetic_generator.py  ──  generates realistic member data
+             (covers every column from excel_datapoints.txt)
+          │
+          ▼  graph_builder.py --members N  ──  for each member creates:
+             · Member vertex
+             · BELONGS_TO_TIER edge  (Member → Tier)
+             · MADE_BOOKING edges    (one per Booking vertex)
+             · CONTAINS_SEGMENT edges (Booking → Segment)
+             · FLIES_ON edges         (Segment → Route)
+             · ORIGIN_AIRPORT / DEST_AIRPORT edges  (Route → Airport)
+             · PURCHASED_ADDON edges  (Segment → AddOn catalog nodes)
+             · EARNS_POINTS_FROM edges (Member → PartnerTransaction)
+             · WITH_PARTNER edges     (PartnerTransaction → Partner)
+             · USES_FARE_TYPE edges   (Member → FareType)
+             · PREFERS_ROUTE edges    (Member → Route)
+             · USES_FARE edges
+          │
+          ▼  Cosmos DB (Gremlin)  ──  persistent graph, stays forever</code></pre>
+
+    <h3>Query phase (every agent call)</h3>
+    <pre><code>User / LLM question
+          │
+          ▼  BluChipGraphDB method called  (cosmos_graph_traversal.py)
+          │
+          ▼  Gremlin READ query  ──  no writes, graph unchanged
+          │
+          ▼  Python dict returned  ──  agent synthesises answer</code></pre>
+  </div>
+
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    <span>Agents <strong>never modify the graph</strong>. The graph is only changed by re-running
+    <code>graph_builder.py</code> when your source data changes.</span>
+  </div>
+
+  <!-- ── File structure ─────────────────────────────────────────────────── -->
+  <h2 id="files"><span class="section-num">◆</span> File structure</h2>
+
+  <div class="filetree">
+    <span class="ft-dir">bluchip_kg/</span><br>
+    &nbsp;&nbsp;<span class="ft-entry">setup_azure.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-note">← run FIRST — provisions all Azure resources + writes .env</span><br>
+    &nbsp;&nbsp;<span class="ft-file">.env.example</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-note">← template; auto-filled by setup_azure.py</span><br>
+    &nbsp;&nbsp;<span class="ft-file">requirements.txt</span><br>
+    &nbsp;&nbsp;<span class="ft-dir">src/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-entry">graph_builder.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-note">← main pipeline — loads all vertices + edges into Cosmos DB</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-dir">data/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">static_data.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-note">← all tiers, 19 partners, 8 fare types, 15 airports</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">synthetic_generator.py</span>&nbsp;&nbsp;<span class="ft-note">← generates realistic members (all 100+ datapoints)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-dir">utils/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">cosmos_helpers.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-note">← Gremlin client, retry logic, vertex/edge builders</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ft-file">cosmos_graph_traversal.py</span>&nbsp;<span class="ft-note">← BluChipGraphDB — all LLM-callable read queries</span><br>
+  </div>
+
+  <!-- ── Query layer ─────────────────────────────────────────────────────── -->
+  <h2 id="queries"><span class="section-num">◆</span> Query layer</h2>
+
+  <p>All Gremlin queries live in <code>BluChipGraphDB</code>. These are the methods you expose as tools to an LLM agent.</p>
+
+  <table>
+    <thead><tr><th>Method</th><th>What it returns</th></tr></thead>
+    <tbody>
+      <tr><td colspan="2" style="font-size:11px;color:var(--muted);padding:6px 12px;background:var(--surface2);letter-spacing:.08em;text-transform:uppercase;">Catalogue / Overview</td></tr>
+      <tr><td><code>schema()</code></td><td>Vertex label counts, all edge types, total edge count</td></tr>
+      <tr><td><code>tier_overview()</code></td><td>All tiers with earn rates, upgrade thresholds, live member counts</td></tr>
+      <tr><td><code>partner_overview()</code></td><td>All partners with earn rate, category, transaction count</td></tr>
+      <tr><td><code>addon_catalog()</code></td><td>All available add-on types with category and price</td></tr>
+      <tr><td colspan="2" style="font-size:11px;color:var(--muted);padding:6px 12px;background:var(--surface2);letter-spacing:.08em;text-transform:uppercase;">Member-centric tools</td></tr>
+      <tr><td><code>member_profile(ffn_id)</code></td><td>Full 360 view — demographics, tier, preferred routes, fare usage, booking/transaction counts</td></tr>
+      <tr><td><code>member_bookings(ffn_id, limit)</code></td><td>Booking list with channel, fare, status, segment count, total fare</td></tr>
+      <tr><td><code>booking_details(booking_id)</code></td><td>All segments in a booking + add-ons per segment</td></tr>
+      <tr><td><code>segment_history(ffn_id, limit)</code></td><td>Flat list of all flight segments ever flown by a member</td></tr>
+      <tr><td><code>member_addons(ffn_id)</code></td><td>Add-on purchase counts across all segments</td></tr>
+      <tr><td><code>member_partner_transactions(ffn_id)</code></td><td>All earn events with partner name, spend, BluChips</td></tr>
+      <tr><td><code>member_preferred_routes(ffn_id)</code></td><td>Routes with trip count + last flown date (PREFERS_ROUTE edges)</td></tr>
+      <tr><td colspan="2" style="font-size:11px;color:var(--muted);padding:6px 12px;background:var(--surface2);letter-spacing:.08em;text-transform:uppercase;">Population / Segment tools</td></tr>
+      <tr><td><code>tier_members(tier_name)</code></td><td>All members on Blu 3 / Blu 2 / Blu 1 with qualifying metrics</td></tr>
+      <tr><td><code>route_travelers(origin, dest)</code></td><td>Members who prefer a specific route (PREFERS_ROUTE)</td></tr>
+      <tr><td><code>popular_routes(top_n)</code></td><td>Routes ranked by number of members + segment count</td></tr>
+      <tr><td><code>partner_transactions(partner_name)</code></td><td>All earn transactions for a partner with member FFNs</td></tr>
+      <tr><td><code>members_by_fare(fare_name)</code></td><td>Members who use a fare type (USES_FARE_TYPE edges)</td></tr>
+      <tr><td><code>members_by_addon(addon_type)</code></td><td>Members who purchased a specific add-on + count</td></tr>
+      <tr><td><code>high_value_members(segment)</code></td><td>Members matching HIGH_FREQ_HIGH_SPEND / LOW_FREQ_HIGH_SPEND etc.</td></tr>
+      <tr><td><code>segment_purchase_summary(origin, dest)</code></td><td>Route-level add-on + fare breakdown from real segment data</td></tr>
+      <tr><td><code>member_subgraph(ffn_id, depth)</code></td><td>N-hop neighbourhood for full contextual LLM view</td></tr>
+    </tbody>
+  </table>
+
+  <hr />
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       SECTION: SETUP GUIDE
+  ══════════════════════════════════════════════════════════════════════════ -->
+
+  <h2 id="step1"><span class="section-num">1</span> Install prerequisites</h2>
+
+  <p>You need two things on your machine before anything else.</p>
+
+  <div class="step-block">
+    <h3>Python 3.11+</h3>
+    <p>Check if you already have it:</p>
+    <pre><span class="lang-tag">powershell</span><code>python --version</code></pre>
+    <p>If not → <strong>python.org/downloads</strong> — check <em>"Add to PATH"</em> during install.</p>
+
+    <h3>Azure CLI</h3>
+    <p>Check if you already have it:</p>
+    <pre><span class="lang-tag">powershell</span><code>az --version</code></pre>
+    <p>If not → <strong>aka.ms/installazurecli</strong> — download the Windows MSI and run it.</p>
+  </div>
+
+  <!-- ── Step 2 ─────────────────────────────────────────────────────────── -->
+  <h2 id="step2"><span class="section-num">2</span> Navigate to the project folder</h2>
+
+  <pre><span class="lang-tag">powershell</span><code>cd <span class="st">"C:\Random\Knowledge Layer\Indigo_Knowledge_Layer-main\bluchip_kg"</span></code></pre>
+
+  <!-- ── Step 3 ─────────────────────────────────────────────────────────── -->
+  <h2 id="step3"><span class="section-num">3</span> Create a virtual environment</h2>
+
+  <p>Always use a venv so packages don't clash with other projects on your machine.</p>
+
+  <pre><span class="lang-tag">powershell</span><code>python -m venv venv
+venv\Scripts\activate</code></pre>
+
+  <div class="callout tip">
+    <span class="callout-icon">✅</span>
+    <span>You'll see <code>(venv)</code> appear at the start of your terminal line. Every command from here must be run with the venv active.</span>
+  </div>
+
+  <!-- ── Step 4 ─────────────────────────────────────────────────────────── -->
+  <h2 id="step4"><span class="section-num">4</span> Install dependencies</h2>
+
+  <pre><span class="lang-tag">powershell</span><code>pip install -r requirements.txt</code></pre>
+
+  <p>This installs:</p>
+  <table>
+    <thead><tr><th>Package</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>gremlinpython</code></td><td>Gremlin client — talks to Cosmos DB over WebSocket</td></tr>
+      <tr><td><code>python-dotenv</code></td><td>Loads your <code>.env</code> credentials file automatically</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Step 5 ─────────────────────────────────────────────────────────── -->
+  <h2 id="step5"><span class="section-num">5</span> Login to Azure</h2>
+
+  <pre><span class="lang-tag">powershell</span><code>az login</code></pre>
+
+  <p>This opens a browser window. Sign in with your Azure account, then come back to the terminal.</p>
+  <p>Confirm it picked the right subscription:</p>
+
+  <pre><span class="lang-tag">powershell</span><code>az account show --query <span class="st">"{Name:name, ID:id}"</span> -o table</code></pre>
+
+  <p>If you have multiple subscriptions and it picked the wrong one:</p>
+
+  <pre><span class="lang-tag">powershell</span><code>az account set --subscription <span class="st">"Your Subscription Name"</span></code></pre>
+
+  <!-- ── Step 6 ─────────────────────────────────────────────────────────── -->
+  <h2 id="step6"><span class="section-num">6</span> Provision Azure infrastructure</h2>
+
+  <p>
+    This single script creates <strong>everything in Azure</strong> and writes your <code>.env</code> automatically.
+    You never need to touch the Azure Portal.
+  </p>
+
+  <div class="card">
+    <table>
+      <thead><tr><th>What it creates</th><th>Default name</th></tr></thead>
+      <tbody>
+        <tr><td>Resource group</td><td><code>bluchip-kg-rg</code></td></tr>
+        <tr><td>Cosmos DB account (Gremlin API)</td><td><code>bluchip-kg-db</code></td></tr>
+        <tr><td>Gremlin database</td><td><code>BluChipKG</code></td></tr>
+        <tr><td>Gremlin graph container (partition key: <code>/pk</code>)</td><td><code>BluChip_360</code></td></tr>
+        <tr><td><code>.env</code> file with credentials</td><td>auto-written</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <pre><span class="lang-tag">powershell</span><code>python setup_azure.py</code></pre>
+
+  <div class="callout warn">
+    <span class="callout-icon">⏳</span>
+    <span>Cosmos DB account provisioning takes <strong>3–5 minutes</strong>. The script will say
+    <em>"This takes 3–5 minutes, please wait…"</em> — just let it run.</span>
+  </div>
+
+  <p>Optional — use a different region or account name:</p>
+
+  <pre><span class="lang-tag">powershell</span><code>python setup_azure.py --location centralindia --account-name my-bluchip-kg</code></pre>
+
+  <p>Available regions near India: <code>centralindia</code> &nbsp;·&nbsp; <code>southindia</code> &nbsp;·&nbsp; <code>westindia</code></p>
+
+  <p>When it finishes you'll see:</p>
+  <pre><span class="lang-tag">output</span><code><span class="green">All done! Your graph is ready.</span>
+Next step: python -m src.graph_builder --members 20</code></pre>
+
+  <!-- ── Step 7 ─────────────────────────────────────────────────────────── -->
+  <h2 id="step7"><span class="section-num">7</span> Verify your .env was created</h2>
+
+  <pre><span class="lang-tag">powershell</span><code>type .env</code></pre>
+
+  <p>It should look like this (with real values, not placeholders):</p>
+
+  <pre><span class="lang-tag">.env</span><code>COSMOS_DB_ENDPOINT=bluchip-kg-db.gremlin.cosmos.azure.com
+COSMOS_DB_KEY=aBcDeFgH...long key...==
+COSMOS_DB_DATABASE=BluChipKG
+COSMOS_DB_GRAPH=BluChip_360</code></pre>
+
+  <div class="callout warn">
+    <span class="callout-icon">⚠️</span>
+    <span>If it still shows placeholder text from <code>.env.example</code>, something went wrong in Step 6.
+    Re-run <code>python setup_azure.py</code>.</span>
+  </div>
+
+  <!-- ── Step 8 ─────────────────────────────────────────────────────────── -->
+  <h2 id="step8"><span class="section-num">8</span> Load static reference nodes</h2>
+
+  <p>
+    This loads the permanent, shared reference data — Tier nodes, Partner nodes, FareType nodes, and Airport nodes.
+    These are created once and never change.
+  </p>
+
+  <pre><span class="lang-tag">powershell</span><code>python -m src.graph_builder --static-only</code></pre>
+
+  <p>Expected output:</p>
+  <pre><span class="lang-tag">output</span><code>Connecting to Cosmos DB…
+Connected.
+Loading 3 Tier vertices…
+Loading 19 Partner vertices…
+Loading 8 FareType vertices…
+Loading 15 Airport vertices…
+Static reference data loaded.
+--static-only flag set. Done.</code></pre>
+
+  <!-- ── Step 9 ─────────────────────────────────────────────────────────── -->
+  <h2 id="step9"><span class="section-num">9</span> Load synthetic member data</h2>
+
+  <p>Start with 20 members to verify everything works end-to-end:</p>
+
+  <pre><span class="lang-tag">powershell</span><code>python -m src.graph_builder --members 20</code></pre>
+
+  <p>Expected output per member:</p>
+  <pre><span class="lang-tag">output</span><code>[1/20]
+  ✓ IB45821937  |  Tier: Silver  |  Trips:  7  |  Partners: 2  |  Routes: 3
+[2/20]
+  ✓ IB73910284  |  Tier: Blue    |  Trips:  2  |  Partners: 1  |  Routes: 2
+...
+Done. 20 members loaded.</code></pre>
+
+  <p>Once confirmed working, load more (skipping static nodes since they're already there):</p>
+
+  <pre><span class="lang-tag">powershell</span><code>python -m src.graph_builder --members 100 --skip-static</code></pre>
+
+  <!-- ── Step 10 ────────────────────────────────────────────────────────── -->
+  <h2 id="step10"><span class="section-num">10</span> Verify the graph in Azure Portal</h2>
+
+  <div class="step-block">
+    <p><strong>1.</strong> Go to <a href="https://portal.azure.com" style="color:var(--blue)">portal.azure.com</a></p>
+    <p><strong>2.</strong> Search for <strong>Cosmos DB</strong> → open your account (<code>bluchip-kg-db</code>)</p>
+    <p><strong>3.</strong> Left menu → <strong>Data Explorer</strong></p>
+    <p><strong>4.</strong> Expand <code>BluChipKG</code> → <code>BluChip_360</code> → click <strong>Graph</strong></p>
+    <p><strong>5.</strong> Run this query in the box:</p>
+    <pre><span class="lang-tag">gremlin</span><code>g.V().groupCount().by(label())</code></pre>
+    <p>Expected result:</p>
+    <pre><span class="lang-tag">json</span><code>{
+  <span class="st">"Member"</span>:              <span class="nu">20</span>,
+  <span class="st">"Tier"</span>:                <span class="nu">3</span>,
+  <span class="st">"Partner"</span>:             <span class="nu">19</span>,
+  <span class="st">"FareType"</span>:            <span class="nu">8</span>,
+  <span class="st">"AddOn"</span>:               <span class="nu">12</span>,
+  <span class="st">"Airport"</span>:             <span class="nu">15</span>,
+  <span class="st">"Route"</span>:               ~<span class="nu">40</span>,
+  <span class="st">"Booking"</span>:             ~<span class="nu">100</span>,
+  <span class="st">"Segment"</span>:             ~<span class="nu">180</span>,
+  <span class="st">"PartnerTransaction"</span>:  ~<span class="nu">80</span>
+}</code></pre>
+    <p><strong>6.</strong> Try a member lookup:</p>
+    <pre><span class="lang-tag">gremlin</span><code>g.V().hasLabel('Member').limit(1).valueMap(true)</code></pre>
+  </div>
+
+  <!-- ── Step 11 ────────────────────────────────────────────────────────── -->
+  <h2 id="step11"><span class="section-num">11</span> Query via Python</h2>
+
+  <p>Open a Python shell with the venv active:</p>
+
+  <pre><span class="lang-tag">powershell</span><code>python</code></pre>
+
+  <pre><span class="lang-tag">python</span><code><span class="kw">from</span> src.utils.cosmos_graph_traversal <span class="kw">import</span> BluChipGraphDB
+
+db = BluChipGraphDB()
+
+<span class="cm"># High-level graph snapshot</span>
+<span class="fn">print</span>(db.schema())
+
+<span class="cm"># All tiers — earn rates, thresholds, live member counts</span>
+<span class="fn">print</span>(db.tier_overview())
+
+<span class="cm"># All available add-ons</span>
+<span class="fn">print</span>(db.addon_catalog())
+
+<span class="cm"># Full 360 profile of one member</span>
+<span class="fn">print</span>(db.member_profile(<span class="st">"IB45821937"</span>))
+
+<span class="cm"># All bookings for a member (latest 10)</span>
+<span class="fn">print</span>(db.member_bookings(<span class="st">"IB45821937"</span>, limit=<span class="nu">10</span>))
+
+<span class="cm"># Segments + add-ons inside one booking</span>
+<span class="fn">print</span>(db.booking_details(<span class="st">"BK12345678"</span>))
+
+<span class="cm"># All flight segments this member ever flew</span>
+<span class="fn">print</span>(db.segment_history(<span class="st">"IB45821937"</span>))
+
+<span class="cm"># What add-ons does this member buy?</span>
+<span class="fn">print</span>(db.member_addons(<span class="st">"IB45821937"</span>))
+
+<span class="cm"># Partner earn history for a member</span>
+<span class="fn">print</span>(db.member_partner_transactions(<span class="st">"IB45821937"</span>))
+
+<span class="cm"># Who flies DEL → BOM?</span>
+<span class="fn">print</span>(db.route_travelers(<span class="st">"DEL"</span>, <span class="st">"BOM"</span>))
+
+<span class="cm"># Add-on + fare breakdown on a route</span>
+<span class="fn">print</span>(db.segment_purchase_summary(<span class="st">"DEL"</span>, <span class="st">"BOM"</span>))
+
+<span class="cm"># Who are the high-value members?</span>
+<span class="fn">print</span>(db.high_value_members(<span class="st">"HIGH_FREQ_HIGH_SPEND"</span>))
+
+<span class="cm"># Members who buy XL seats</span>
+<span class="fn">print</span>(db.members_by_addon(<span class="st">"XL_SEAT"</span>))</code></pre>
+
+  <hr />
+
+  <!-- ── CLI flags ──────────────────────────────────────────────────────── -->
+  <h2 id="flags"><span class="section-num">◆</span> CLI flags reference</h2>
+
+  <h3>setup_azure.py</h3>
+  <table>
+    <thead><tr><th>Flag</th><th>Default</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>--resource-group</code></td><td><code>bluchip-kg-rg</code></td><td>Azure resource group name</td></tr>
+      <tr><td><code>--location</code></td><td><code>eastus</code></td><td>Azure region (e.g. <code>centralindia</code>)</td></tr>
+      <tr><td><code>--account-name</code></td><td><code>bluchip-kg-db</code></td><td>Cosmos DB account name — must be globally unique</td></tr>
+      <tr><td><code>--database-name</code></td><td><code>BluChipKG</code></td><td>Gremlin database name</td></tr>
+      <tr><td><code>--graph-name</code></td><td><code>BluChip_360</code></td><td>Gremlin graph container name</td></tr>
+      <tr><td><code>--throughput</code></td><td><code>400</code></td><td>RU/s for the graph (400 = free-tier minimum)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>graph_builder.py</h3>
+  <table>
+    <thead><tr><th>Flag</th><th>Default</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>--members N</code></td><td>20</td><td>Number of synthetic members to generate and load</td></tr>
+      <tr><td><code>--seed N</code></td><td>42</td><td>Random seed — change for different synthetic data</td></tr>
+      <tr><td><code>--purge</code></td><td>off</td><td>Drop all existing vertices before loading</td></tr>
+      <tr><td><code>--static-only</code></td><td>off</td><td>Only load Tier / Partner / FareType / Airport vertices</td></tr>
+      <tr><td><code>--skip-static</code></td><td>off</td><td>Skip reference nodes, only load member data</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ── Cheat sheet ────────────────────────────────────────────────────── -->
+  <h2 id="cheatsheet"><span class="section-num">◆</span> Complete cheat sheet</h2>
+
+  <div class="cheatsheet">
+    <div class="cheatsheet-title">Copy-paste — full setup from zero</div>
+    <pre><code><span class="cm"># ── One-time machine setup ────────────────────────────────────────────</span>
+<span class="cm"># Install Python from python.org  (check "Add to PATH")</span>
+<span class="cm"># Install Azure CLI from aka.ms/installazurecli</span>
+
+<span class="cm"># ── Project setup ─────────────────────────────────────────────────────</span>
+cd <span class="st">"C:\Random\Knowledge Layer\Indigo_Knowledge_Layer-main\bluchip_kg"</span>
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+
+<span class="cm"># ── Azure provisioning (one-time, ~5 minutes) ─────────────────────────</span>
+az login
+python setup_azure.py
+
+<span class="cm"># ── Build the graph ────────────────────────────────────────────────────</span>
+python -m src.graph_builder --static-only      <span class="cm"># load reference nodes first</span>
+python -m src.graph_builder --members 20       <span class="cm"># load 20 synthetic members</span>
+
+<span class="cm"># ── Reload from scratch at any time ───────────────────────────────────</span>
+python -m src.graph_builder --purge --members 50</code></pre>
+  </div>
+
+</main>
+
+<script>
+  // Highlight active sidebar link on scroll
+  const sections = document.querySelectorAll('[id]');
+  const links    = document.querySelectorAll('.sidebar a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -75% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

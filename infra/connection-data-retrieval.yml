@@ -1,0 +1,15 @@
+$schema: https://azuremlschemas.azureedge.net/latest/customConnection.schema.json
+name: indigo-kg-data-retrieval
+type: custom
+target: https://indigo-kg-data-retrieval.proudocean-a4621ff3.westus2.azurecontainerapps.io/score
+metadata:
+  endpoint: https://indigo-kg-data-retrieval.proudocean-a4621ff3.westus2.azurecontainerapps.io
+  health_endpoint: https://indigo-kg-data-retrieval.proudocean-a4621ff3.westus2.azurecontainerapps.io/health
+  score_endpoint: https://indigo-kg-data-retrieval.proudocean-a4621ff3.westus2.azurecontainerapps.io/score
+  description: Data retrieval agent that queries physical databases using knowledge graph metadata
+  example_request: '{"query": "Get performance score for employee Akash Saxena", "backend": "cosmos"}'
+  agent_type: data_retrieval
+  deployment_type: azure_container_apps
+  type: REST_API
+  category: Knowledge_Graph
+  requires: SQL_Server_Access

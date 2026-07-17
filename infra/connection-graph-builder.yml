@@ -1,0 +1,14 @@
+$schema: https://azuremlschemas.azureedge.net/latest/customConnection.schema.json
+name: indigo-kg-builder
+type: custom
+target: https://indigo-kg-builder.proudocean-a4621ff3.westus2.azurecontainerapps.io/score
+metadata:
+  endpoint: https://indigo-kg-builder.proudocean-a4621ff3.westus2.azurecontainerapps.io
+  health_endpoint: https://indigo-kg-builder.proudocean-a4621ff3.westus2.azurecontainerapps.io/health
+  score_endpoint: https://indigo-kg-builder.proudocean-a4621ff3.westus2.azurecontainerapps.io/score
+  description: Advanced graph builder agent that extracts concepts and relationships from database schemas
+  example_request: '{"database": "CLMS", "skip_neo4j": true}'
+  agent_type: knowledge_graph_builder
+  deployment_type: azure_container_apps
+  type: REST_API
+  category: Knowledge_Graph

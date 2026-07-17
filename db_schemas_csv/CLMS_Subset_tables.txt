@@ -1,0 +1,25 @@
+
+Main Leave details
+--------------------------
+T_CLMS_LeaveReqDetail
+
+T_CLMS_LeaveReqDetail_OtherRocadeCodes
+
+T_CLMS_LeaveReqMaster
+
+T_CLMS_LeaveReqMaster_OtherRocadeCodes
+
+Supporting tables
+------------------------
+T_Crew_LeaveYear
+
+M_LMS_LeaveType
+
+M_LMS_StatusType
+
+M_CLMS_LeaveBalance
+
+M_CLMS_Crew
+
+M_LeaveYear
+

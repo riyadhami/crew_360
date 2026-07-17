@@ -1,0 +1,54 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+name: Test Knowledge Graph Agents
+description: Test the deployed graph builder and unifier agents
+display_name: Test KG Agents
+type: standard
+
+inputs:
+  database_name:
+    type: string
+    default: "CLMS"
+    description: "Database to process (CLMS, CrewPortal, or PEP)"
+
+outputs:
+  graph_builder_result:
+    type: object
+    reference: ${call_graph_builder.output}
+    description: "Extracted concepts and relationships"
+
+nodes:
+  - name: call_graph_builder
+    type: http
+    source:
+      type: code
+      path: graph_builder_node.py
+    inputs:
+      url: "https://indigo-kg-builder.proudocean-a4621ff3.westus2.azurecontainerapps.io/score"
+      method: POST
+      headers:
+        Content-Type: "application/json"
+      body:
+        database: ${inputs.database_name}
+        skip_neo4j: true
+    
+  - name: analyze_results
+    type: llm
+    source:
+      type: code
+      path: analyze_node.py
+    inputs:
+      deployment_name: gpt-4
+      temperature: 0.7
+      max_tokens: 500
+      prompt: |
+        Analyze the following knowledge graph extraction results:
+        
+        Database: ${inputs.database_name}
+        Results: ${call_graph_builder.output}
+        
+        Provide a summary of:
+        1. Number of concepts extracted
+        2. Key concept types identified
+        3. Number of relationships found
+        4. Overall quality assessment
+    connection: Default_AzureOpenAI

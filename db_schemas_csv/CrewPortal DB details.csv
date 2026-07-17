@@ -1,0 +1,77 @@
+TABLE_NAME,DESCRIPTION
+Document,"Dcoument Checklist ,Flyers,Bulletins"
+DocumentDetails,"Data store the  Checklist ,Flyers,Bulletins"
+Forms,"Data store the  Checklist ,Flyers,Bulletins"
+M_AdminNotification,6e cruuz send Notification
+M_Aircraft,"Stores details about aircraft including ID, description, type, sub-fleet, active status, display name, and audit information like created/modified by and dates."
+M_AirportNames,"Contains airport-related information such as airport code, name, city details, defense station flag, life vest availability, and audit timestamps."
+M_Application,Store the Application data
+M_Assessor,Store the Assessor  Name 
+M_Base,Maintains base identifiers and names for operational or crew assignments.
+M_BaseEmailID,Defines the Base  and Base Email Ids 
+M_CabinType,Defines Cabin type actype wise
+M_CategoryMaster_AdminNotification,define the Category for admin notification
+M_CategoryMasterComplaintTrends,Defines category for complaint Treands
+M_CDLB,"Holds CDL/B (Configuration Deviation List/Book) details including ID, description, active status, and audit information."
+M_ConfigurationMaster,defind the config master for  secuirty fixes
+M_Controls,define the control for Flight report 
+M_Controls_Attribute,Define the control ID actype wise
+M_ControlType,define the Control
+M_CrewDetails,"Captures crew personal and professional details such as name, ID, category, type, contact information, address, and base."
+M_CrewPosition,"Defines crew positions with IDs, descriptions, sequence numbers, and audit details."
+M_CrewPositionWiseSeatNumber,Mapping of the Positions and seat numbers in the flight
+M_FinanceStation,define the Finance Station
+M_FlightTipMaster,"Stores flight tips categorized by aircraft type, arrival/departure stations, implementation date, and active status."
+M_FlightType_ProcessCompliance_Mapping,Mapping the Process Compliance  Actype wise 
+M_FlightTypeIssueCategory,"Maps flight types to issue categories and subcategories, including flags for cabin type and CDL/B relevance."
+M_FormType,Announcement related
+M_FR_ProcessCompliance,"Contains compliance process details like name, ID, remarks requirement, validity, and audit info."
+M_FR_ProcessComplianceValue,Process Compliance Value store  Actype wise 
+M_HOD_Message,"Stores messages from HOD including content, validity dates, and audit details."
+M_InternationalBases,Define the International Bases
+M_Issue,Maintains issue categories and subcategories with department info and active status.
+M_IssueCategory,"Defines issue categories with unique IDs, names, and audit details."
+M_IssueCategoryStnMapping,Maps issue categories and subcategories to stations with audit info.
+M_IssueSubCategory,"Stores subcategory details including name, description, unique ID, and active status."
+M_Modules,"Contains module names, descriptions, active status, and IDs."
+M_MposNonUsageReasons,Lists reasons for non-usage of MPOS along with audit details.
+M_PrintDocType,Define the  Print Doc used for flight brief
+M_SafetyTrendsMaster,"Captures safety trend tips categorized by aircraft type, stations, implementation date, and active status."
+M_SourceApplication,"Stores source application details including name, ID, and timestamps."
+M_Station,"Contains station details like code, name, unique ID, and active status."
+T_AdminNotificationAircraftMapping,Mapping Admin Notification Aircraft
+T_AdminNotificationCategoryMapping,Mapping Admin Notification Category
+T_Aircraft_CrewInvolve,Define the Crew Involve used for Flight Report 
+T_Aircraft_CrewInvolve_Controls,Mpping the Crew involve Actype used for Flight Report 
+T_Aircraft_Position_Controls,Mapping the Position in Actype used for Flight Report 
+T_Aircraft_ProcessCompliance_Controls,Mapping the Proccess Compliance Actype  used for Flight Report 
+T_AirCraftCrewPosition,define the pisition 
+T_AlertAcknowledgedData,"Stores the details like when the alert is triggered to crew, when it is acknowledged."
+T_CashDepositStationCodeMapping,Defines which stations are deposit stations
+T_CheckIn,Stores the crew Check-in details
+T_CrewPal_NotificationAcknowledgement,"Stores the crewid, email, documentid, departure id, document name, status of document(Read/Unread)"
+T_EELCMasterFile,"Maintains EELC form details including aircraft registration, attachments, active status, and audit info."
+T_EELCMasterFile,"Consists of AircraftRegNo, EELCFormNo, attachmentname, active status, createddate, updateddate etc."
+T_EHDServiceNowLog,Logs ServiceNow requests and responses related to flight report issues.
+T_EHDServiceNowLog,Stores Request and Response (req sent to servicenow and response from servicenow)
+T_ESB6EClapLogs,"Stores the Request,RequestDateTime,Response,ResponseDateTime and UserSessionID for 6eClaps"
+T_ESBachievementLogs,"Stores the logs such as  Request(contains crewid),RequestDateTime,Response,ResponseDateTime and UserSessionID"
+T_EsbBounsDetailLogs,"Stores the logs such as  Request(contains crewid),RequestDateTime,Response,ResponseDateTime and UserSessionID for Achievements"
+T_EsbCrewCompetencyCardLogs,"Stores the logs such as  Request(contains crewid),RequestDateTime,Response,ResponseDateTime and UserSessionID for Competency Card"
+T_EsbCrewOnBoardV2Logs,stores logs from EsbCrewOnBoardV2
+T_EsbSalesTargetAchievedLogs,stores logs from SalesTargetAchievedLogs
+T_EsbSalesTargetLogs,stores logs from SalesTargetLogs
+T_FlightIssueDetails,"Stores detailed information about flight issues including actions, comments, crew involvement, and status flags."
+T_FlightIssueDetails,"This table will have Flight report issue details such as request number, category and subcategory id, crew involved, station, comments etc."
+T_FlightIssueGeneralInfo,"Captures general flight issue info such as flight number, date, type, stations, and source application."
+T_FlightIssueWorkPositionDetails,Contains IGA details for various crew positions linked to a report.
+T_FlightProcessCompliance,Tracks compliance values and remarks for flight processes linked to reports.
+T_FlightReportsFilledThroughAPI,Stores Created By(who filled the flight report) and Status of the flight report.
+T_FlightReportWorkPositionDetails,Consists of the work position details in the flight 
+T_FlightTipDetails,Maintains the Inflight issue details
+T_FlightType,Defines flight types with IDs and active status.
+T_MissingFlightReportGenerationRequest,"Tracks who has requested for the pending flight report details with request, email, timestamp, requested through which application, report status(sent/not sent)"
+T_SafetyTrendsDetails,Stores safety trend tips linked to master records.
+T_SalesReportLog,"Maintains the details of sales report such as Crew IGA, request JSON, Response JSON, sales report InsertionDate"
+T_SalesSMSNotifier,"Consists of Crewid, cartid, sectors operated, Notification status etc."
+T_StationInformationBrief,"Contains station brief details including name, code, image, and active status."

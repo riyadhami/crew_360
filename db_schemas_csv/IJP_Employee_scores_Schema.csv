@@ -1,0 +1,13 @@
+TABLE_NAME,COLUMN_NAME,DATA_TYPE,DESCRIPTION
+IJP_Employee_scores,FleetType,string,Aircraft fleet type(s) the employee is qualified for
+IJP_Employee_scores,IGA,integer,Employee ID of Indigo employees (Primary Key for joins)
+IJP_Employee_scores,Designation,string,Employee designation or role
+IJP_Employee_scores,Base,string,Employee base location
+IJP_Employee_scores,Name,string,Employee name
+IJP_Employee_scores,LWPDays,integer,Leave Without Pay days extracted from CLMS
+IJP_Employee_scores,BMI,float,Body Mass Index data for employee
+IJP_Employee_scores,AppreciationLetters,integer,Count of appreciation letters received by employee
+IJP_Employee_scores,CautionLetters,string,Details of caution letters or counselling forms received
+IJP_Employee_scores,NonPerfDiscussion,string,Any non-performance discussion records
+IJP_Employee_scores,CoachingSessions,string,Curative training/icoach/performance coaching sessions attended
+IJP_Employee_scores,Recognition,string,Extra initiatives and recognition (employee of month/6e clap/6e WOW champions)

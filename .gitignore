@@ -1,0 +1,354 @@
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ============================================
+# Virtual Environments
+# ============================================
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ============================================
+# Environment & Secrets (SENSITIVE)
+# ============================================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+*.key
+*.pem
+*.crt
+*.cer
+*.p12
+*.pfx
+secrets.json
+credentials.json
+config.secret.*
+*_secrets.*
+*_credentials.*
+*.secrets
+
+# ============================================
+# Azure & Cloud Credentials (SENSITIVE)
+# ============================================
+.azure/
+azure.json
+azuredeploy.parameters.*.json
+*.publishsettings
+*.azurePubxml
+
+# ============================================
+# Database Files
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+*.rdb
+*.log
+
+# ============================================
+# Project Output Directories
+# ============================================
+output/
+unified_output/
+results/
+exports/
+
+# ============================================
+# IDEs and Editors
+# ============================================
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ============================================
+# Operating System Files
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# Logs and Temporary Files
+# ============================================
+*.log
+logs/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.coverage
+.coverage.*
+htmlcov/
+*.cover
+.hypothesis/
+
+# ============================================
+# Documentation Build
+# ============================================
+docs/_build/
+site/
+
+# ============================================
+# Backup Files
+# ============================================
+*.bak
+*.backup
+*.old
+*.orig
+
+# ============================================
+# Compiled and Packaged Files
+# ============================================
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# ============================================
+# Node.js (if any JS dependencies)
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ============================================
+# Graph Database Exports (Project-Specific)
+# ============================================
+*.cypher
+*.gremlin
+*_agent_log.txt
+*_concept_graph.json
+*_concept_graph.md
+*_gremlin_queries.txt
+unified_output_v2/
+check_*.py
+
+# ============================================
+# Test Files (Project-Specific)
+# ============================================
+test_agent_*.py
+test_find_*.py
+
+# ============================================
+# Data Files (Large datasets - consider using Git LFS)
+# ============================================
+*.xlsx
+*.xls
+!db_schemas_csv/IJP_Employee_Performance.xls
+!db_schemas_csv/Indigo_HR_Raw_Data.xlsx
+!db_schemas_csv/Indigo_HR_Raw_Data_Filled.xlsx
+
+# ============================================
+# VS Code Session Files
+# ============================================
+*.code-workspace.json
+
+# ============================================
+# Python Package Management
+# ============================================
+Pipfile
+Pipfile.lock
+poetry.lock
+pyproject.toml.bak
+
+# ============================================
+# Testing and Coverage
+# ============================================
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+nosetests.xml
+test-results/
+junit/
+
+# ============================================
+# Type Checking
+# ============================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+pyrightconfig.json
+
+# ============================================
+# Linting and Formatting
+# ============================================
+.ruff_cache/
+.pylintrc
+.flake8
+
+# ============================================
+# Cloud Provider Specific
+# ============================================
+# Azure
+*.azurePubxml.user
+.azure-pipelines/
+azds.yaml
+.azuredevops/
+
+# AWS (if used)
+.aws/
+
+# GCP (if used)  
+.gcp/
+
+# ============================================
+# Container and Orchestration
+# ============================================
+# Docker
+.dockerignore.bak
+docker-compose.override.yml
+.docker/
+
+# Kubernetes
+*.kubeconfig
+kustomization.yaml.bak
+
+# ============================================
+# CI/CD
+# ============================================
+.github/workflows/*.bak
+.gitlab-ci.yml.bak
+azure-pipelines.yml.bak
+
+# ============================================
+# Terraform (if used for IaC)
+# ============================================
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+!example.tfvars
+
+# ============================================
+# ARM/Bicep (Azure IaC)
+# ============================================
+*.parameters.json
+!*.parameters.example.json
+azuredeploy.parameters.dev.json
+azuredeploy.parameters.prod.json
+
+# ============================================
+# Monitoring and Profiling
+# ============================================
+*.prof
+*.lprof
+*.pyprof
+.profiling/
+
+# ============================================
+# Machine Learning Models (if applicable)
+# ============================================
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+*.pb
+models/
+checkpoints/
+mlruns/
+
+# ============================================
+# Miscellaneous
+# ============================================
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/.ropeproject
+*_concept_graph.md
+*_cypher_queries.txt
+*_gremlin_queries.txt
+unified_concept_mapping.json
+unified_kg.json
+unified_kg.md

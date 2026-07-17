@@ -1,0 +1,92 @@
+# ============================================
+# Indigo Airlines Knowledge Layer
+# Python Dependencies
+# ============================================
+
+# ============================================
+# Core Dependencies
+# ============================================
+
+# Azure OpenAI for LLM inference
+openai>=1.12.0
+azure-identity>=1.15.0
+
+# Environment configuration
+python-dotenv>=1.0.0
+
+# JSON utilities
+json-repair>=0.25.0
+
+# ============================================
+# Graph Database (Cosmos DB Gremlin API)
+# ============================================
+gremlinpython>=3.7.0
+
+# ============================================
+# SQL Database (SQL Server)
+# ============================================
+pyodbc>=5.0.1
+SQLAlchemy>=2.0.25
+
+# ============================================
+# Web Framework (End-User App)
+# ============================================
+Flask>=3.0.0
+Werkzeug>=3.0.0
+
+# ============================================
+# Data Processing
+# ============================================
+# Excel file handling (for schema files)
+openpyxl>=3.1.2
+
+# Data manipulation (if needed)
+pandas>=2.2.0
+
+# ============================================
+# Utilities
+# ============================================
+# Logging and formatting
+colorama>=0.4.6
+
+# ============================================
+# Development Dependencies (Optional)
+# ============================================
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+
+# Code quality
+black>=24.0.0
+ruff>=0.2.0
+mypy>=1.8.0
+
+# Type stubs
+types-requests>=2.31.0
+
+# ============================================
+# Optional: Neo4j Support (Alternative to Cosmos DB)
+# ============================================
+# Uncomment if using Neo4j instead of Cosmos DB
+# neo4j>=5.16.0
+
+# ============================================
+# Optional: Enhanced LLM Support
+# ============================================
+# Uncomment for additional LLM providers
+# anthropic>=0.20.0      # Claude models
+# langchain>=0.1.0       # LangChain framework
+# tiktoken>=0.6.0        # Token counting
+
+# ============================================
+# Platform-Specific Notes
+# ============================================
+# Windows: ODBC Driver 17+ for SQL Server required
+#   Download from: https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server
+#
+# Linux: Install unixODBC and ODBC Driver
+#   sudo apt-get install unixodbc unixodbc-dev
+#
+# macOS: Install via Homebrew
+#   brew install unixodbc

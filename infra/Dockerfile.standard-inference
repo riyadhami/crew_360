@@ -1,0 +1,61 @@
+# Dockerfile for Standard Inference Agent
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies + Flask for HTTP API
+RUN pip install --no-cache-dir -r requirements.txt flask gunicorn
+
+# Copy application code
+COPY src/ ./src/
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+# Expose port for HTTP API
+EXPOSE 8080
+
+# Health check endpoint
+COPY infra/health_check.py ./health_check.py
+
+# Create API wrapper for standard inference agent
+RUN echo 'from flask import Flask, request, jsonify\n\
+import sys\n\
+sys.path.insert(0, "/app")\n\
+from src.agents.inference_agent import run_agent_stream\n\
+\n\
+app = Flask(__name__)\n\
+\n\
+@app.route("/health", methods=["GET"])\n\
+def health():\n\
+    return jsonify({"status": "healthy", "agent": "standard-inference"})\n\
+\n\
+@app.route("/score", methods=["POST"])\n\
+def score():\n\
+    data = request.get_json()\n\
+    query = data.get("query", "")\n\
+    backend = data.get("backend", "cosmos")\n\
+    \n\
+    if not query:\n\
+        return jsonify({"error": "query parameter required"}), 400\n\
+    \n\
+    results = []\n\
+    for event in run_agent_stream(query, backend):\n\
+        results.append(event)\n\
+    \n\
+    return jsonify({"events": results, "query": query})\n\
+\n\
+if __name__ == "__main__":\n\
+    app.run(host="0.0.0.0", port=8080)' > api_standard_inference.py
+
+# Run Flask API with gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "300", "api_standard_inference:app"]

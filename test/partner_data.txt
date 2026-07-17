@@ -1,0 +1,23 @@
+Partner:
+NON-FINANCIAL
+-swiggy(1blu/250rs)
+-pizzahut
+-dutyfree 5blu/100
+-nobero(1 blu/100
+-eazydiner(1blu/250rs)
+-healthians 12blu/100
+-the postcard hotel(1 blu/100)
+-commbitz 30/100
+-onpoint 4blu/5pts
+-atlys 4blu/100
+-airportzo 5blu/100
+-adani(5 bluchip/100spent)
+-iplanet(30 bluchip/100)
+-hpcl(1 blu/100rs)
+-pizzahut(2bluchip/100)
+-mcdonalds(2bluchip/100)
+FINANCIAL
+-idfc(22blu/100rs)
+-axis bank(23bluchip/100rs)
+-kotak mahindra(21bluchip/100)
+-sbi card(23 bluchip/100)
