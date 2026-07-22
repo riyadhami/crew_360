@@ -23,6 +23,7 @@ load_dotenv()
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from src.agents.Data_Retrieval_Agent_New import DatabaseConnectionManager, calculate_employee_score
+from src.utils import get_graph_db
 
 
 def display_score_breakdown(score_result):
@@ -93,9 +94,10 @@ def main():
     
     args = parser.parse_args()
     
-    # Initialize database manager
+    # Initialize database + graph connections
     print("🔄 Initializing database connection...")
     db_manager = DatabaseConnectionManager()
+    graph_db = get_graph_db()
     
     # Determine identifier type and value
     if args.name:
@@ -111,6 +113,7 @@ def main():
     print("⏳ Fetching data and calculating scores...")
     result = calculate_employee_score(
         db_manager=db_manager,
+        graph_db=graph_db,
         employee_identifier=identifier,
         identifier_type=identifier_type
     )

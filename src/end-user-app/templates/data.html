@@ -478,6 +478,11 @@
       </div>
       <span class="legend-sep">·</span>
       <div class="legend-item">
+        <span class="legend-shape" style="color:#facc15;">★</span>
+        <span>Policy (SOP)</span>
+      </div>
+      <span class="legend-sep">·</span>
+      <div class="legend-item">
         <span class="legend-dot" style="background:#2dd4bf;"></span>
         <span>HRData</span>
       </div>
@@ -539,6 +544,7 @@
       case 'HRDATA': return '#2dd4bf';
       case 'CLMS': return '#f472b6';
       case 'IJP': return '#a78bfa';
+      case 'POLICY': return '#facc15';
       default: return '#fb923c';
     }
   }
@@ -724,11 +730,12 @@
                   if (!n || !n.database || !n.name) continue;
                   const nodeId = `${n.database}::${n.name}`;
                   if (!nodes.get(nodeId)) {
-                    const shape = n.type === 'Concept' ? 'box' : 'triangle';
+                    const shape = n.type === 'Concept' ? 'box' : n.type === 'Policy' ? 'star' : 'triangle';
                     nodes.add({
                       id: nodeId,
                       label: n.name,
                       shape,
+                      size: n.type === 'Policy' ? 24 : 18,
                       color: { background: dbColor(n.database), border: '#fff' },
                       title: `${n.type} (${n.database})`
                     });
@@ -834,25 +841,35 @@
           <div style="background: var(--card); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">
             <div style="font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--purple); margin-bottom: 12px;">Knowledge Graph Structure</div>`;
         
-        // Concepts
+        // Concepts — the LLM sometimes returns plain concept-name strings instead
+        // of {name, database, description} objects; handle both.
         if (json.subgraph.concepts && json.subgraph.concepts.length > 0) {
           html += '<div style="margin-bottom: 12px;"><div style="font-size: .78rem; font-weight: 600; color: var(--green); margin-bottom: 6px;">■ Concepts</div><ul style="margin-left: 18px; font-size: .85rem;">';
           json.subgraph.concepts.forEach(c => {
-            html += `<li style="margin-bottom: 4px;"><strong>${c.name}</strong> <span style="color: var(--muted);">(${c.database})</span><br><span style="font-size: .8rem; color: var(--muted);">${c.description || ''}</span></li>`;
+            const isObj = c && typeof c === 'object';
+            const name = isObj ? (c.name || c.concept || 'Unknown concept') : String(c);
+            const db = isObj ? c.database : null;
+            const desc = isObj ? (c.description || '') : '';
+            html += `<li style="margin-bottom: 4px;"><strong>${name}</strong>${db ? ` <span style="color: var(--muted);">(${db})</span>` : ''}${desc ? `<br><span style="font-size: .8rem; color: var(--muted);">${desc}</span>` : ''}</li>`;
           });
           html += '</ul></div>';
         }
-        
-        // Tables
+
+        // Tables — same defensive handling as Concepts above.
         if (json.subgraph.tables && json.subgraph.tables.length > 0) {
           html += '<div style="margin-bottom: 12px;"><div style="font-size: .78rem; font-weight: 600; color: var(--orange); margin-bottom: 6px;">▲ Tables</div><ul style="margin-left: 18px; font-size: .85rem;">';
           json.subgraph.tables.forEach(t => {
-            html += `<li style="margin-bottom: 6px;"><strong>${t.name}</strong> <span style="color: var(--muted);">(${t.database})</span>`;
-            if (t.description) {
-              html += `<br><span style="font-size: .78rem; color: var(--muted);">${t.description}</span>`;
+            const isObj = t && typeof t === 'object';
+            const name = isObj ? (t.name || t.table || 'Unknown table') : String(t);
+            const db = isObj ? t.database : null;
+            const desc = isObj ? t.description : null;
+            const cols = isObj && Array.isArray(t.columns) ? t.columns : null;
+            html += `<li style="margin-bottom: 6px;"><strong>${name}</strong>${db ? ` <span style="color: var(--muted);">(${db})</span>` : ''}`;
+            if (desc) {
+              html += `<br><span style="font-size: .78rem; color: var(--muted);">${desc}</span>`;
             }
-            if (t.columns && t.columns.length > 0) {
-              html += `<br><span style="font-size: .75rem; color: var(--muted);">Columns: ${t.columns.slice(0, 5).join(', ')}${t.columns.length > 5 ? '...' : ''}</span>`;
+            if (cols && cols.length > 0) {
+              html += `<br><span style="font-size: .75rem; color: var(--muted);">Columns: ${cols.slice(0, 5).join(', ')}${cols.length > 5 ? '...' : ''}</span>`;
             }
             html += '</li>';
           });
@@ -863,13 +880,20 @@
       }
       
       // Retrieved Data (Main Section)
+      // The "data" field's shape isn't fixed — the LLM composes it fresh each time
+      // (e.g. an array of rows, a {columns, data} wrapper, or — for a single result
+      // like "the one best performer" — a plain object with no array at all). Normalize
+      // all three into a row array so single-object results don't get treated as empty.
+      function _rowsFrom(dataResult) {
+        if (Array.isArray(dataResult)) return dataResult;
+        if (dataResult && Array.isArray(dataResult.data)) return dataResult.data;
+        if (dataResult && typeof dataResult === 'object' && Object.keys(dataResult).length > 0) return [dataResult];
+        return [];
+      }
+
       if (json.data) {
-        const hasData = Object.values(json.data).some(d => {
-          if (Array.isArray(d) && d.length > 0) return true;
-          if (d && d.data && Array.isArray(d.data) && d.data.length > 0) return true;
-          return false;
-        });
-        
+        const hasData = Object.values(json.data).some(d => _rowsFrom(d).length > 0);
+
         if (hasData) {
           html += `
             <div style="background: linear-gradient(135deg, var(--card) 0%, var(--surface) 100%); padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 2px solid var(--data-accent);">
@@ -881,11 +905,32 @@
             // Skip metadata fields
             if (tableName === 'assembled_result') continue;
             
-            const rows = Array.isArray(dataResult) ? dataResult : (dataResult.data || []);
-            const cols = dataResult.columns || (rows.length > 0 ? Object.keys(rows[0]) : []);
-            
-            if (rows.length > 0) {
+            const rows = _rowsFrom(dataResult);
+            if (rows.length === 0) continue;
+
+            // A "row" that isn't an object (e.g. errors: ["msg1", "msg2"]) isn't a
+            // table — rendering it with Object.keys() would iterate string character
+            // indices as columns. Render primitive rows as a simple list instead.
+            const rowsArePrimitive = typeof rows[0] !== 'object' || rows[0] === null;
+
+            if (rowsArePrimitive) {
               html += `
+                <div style="margin-bottom: 14px;">
+                  <div style="font-size: .82rem; font-weight: 600; color: var(--data-accent); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                    <span style="background: var(--data-accent); color: white; padding: 2px 8px; border-radius: 3px; font-size: .72rem;">${rows.length}</span>
+                    <span>${tableName}</span>
+                  </div>
+                  <ul style="margin-left: 18px; font-size: .85rem; color: var(--text);">`;
+              rows.forEach(r => {
+                html += `<li style="margin-bottom: 4px;">${String(r)}</li>`;
+              });
+              html += '</ul></div>';
+              continue;
+            }
+
+            const cols = (!Array.isArray(dataResult) && dataResult.columns) || Object.keys(rows[0]);
+
+            html += `
                 <div style="margin-bottom: 14px;">
                   <div style="font-size: .82rem; font-weight: 600; color: var(--data-accent); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
                     <span style="background: var(--data-accent); color: white; padding: 2px 8px; border-radius: 3px; font-size: .72rem;">${rows.length} rows</span>
@@ -895,25 +940,25 @@
                     <table style="width: 100%; border-collapse: collapse; font-size: .8rem; background: var(--bg);">
                       <thead>
                         <tr>`;
-              
+
+            cols.forEach(col => {
+              html += `<th style="background: var(--card); border: 1px solid var(--border); padding: 8px 10px; text-align: left; font-weight: 600; color: var(--data-accent); white-space: nowrap;">${col}</th>`;
+            });
+
+            html += '</tr></thead><tbody>';
+
+            rows.forEach((row, idx) => {
+              html += `<tr style="background: ${idx % 2 === 0 ? 'var(--bg)' : 'var(--surface)'};">`;
               cols.forEach(col => {
-                html += `<th style="background: var(--card); border: 1px solid var(--border); padding: 8px 10px; text-align: left; font-weight: 600; color: var(--data-accent); white-space: nowrap;">${col}</th>`;
+                const value = row[col] !== null && row[col] !== undefined ? row[col] : '';
+                const rendered = (typeof value === 'object') ? JSON.stringify(value) : String(value);
+                const displayValue = rendered.length > 100 ? rendered.substring(0, 100) + '...' : rendered;
+                html += `<td style="border: 1px solid var(--border); padding: 8px 10px; color: var(--text);">${displayValue}</td>`;
               });
-              
-              html += '</tr></thead><tbody>';
-              
-              rows.forEach((row, idx) => {
-                html += `<tr style="background: ${idx % 2 === 0 ? 'var(--bg)' : 'var(--surface)'};">`;
-                cols.forEach(col => {
-                  const value = row[col] !== null && row[col] !== undefined ? row[col] : '';
-                  const displayValue = String(value).length > 100 ? String(value).substring(0, 100) + '...' : String(value);
-                  html += `<td style="border: 1px solid var(--border); padding: 8px 10px; color: var(--text);">${displayValue}</td>`;
-                });
-                html += '</tr>';
-              });
-              
-              html += '</tbody></table></div></div>';
-            }
+              html += '</tr>';
+            });
+
+            html += '</tbody></table></div></div>';
           }
           
           // Assembled result

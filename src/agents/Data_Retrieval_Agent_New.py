@@ -570,15 +570,15 @@ TOOLS = [
         "function": {
             "name": "calculate_employee_score",
             "description": (
-                "Calculate comprehensive weighted performance score for an employee based on multiple criteria. "
-                "This tool automatically fetches data from multiple tables and computes:"
-                "\n- Crew Availability (40%) - from CLMS database"
-                "\n- Poise & Grace/BMI (10%) - from HR data"
-                "\n- Appreciation Letters (20%) - from performance records"
-                "\n- Non-performance Discussions (10%) - from disciplinary records"
-                "\n- Curative Training/iCoach sessions (5%) - from training logs"
-                "\n- Extra Initiatives/Recognition (5%) - from 6E Clap and other recognitions"
-                "\n- Passenger NPS Feedback (10%) - from NPS survey responses attributed to the crew member"
+                "Calculate comprehensive weighted performance score for an employee, using the "
+                "current weights/thresholds published in the 'Weighted Performance Scoring Policy' "
+                "knowledge graph node (single source of truth — not hardcoded here, so the exact "
+                "weights can change without notice; call node_details on that policy node if you "
+                "need the current numbers). Components: Crew Availability (CLMS), Poise & Grace/BMI "
+                "(HR data), Appreciation Letters (performance records), Non-performance Discussions "
+                "(disciplinary records), Curative Training/iCoach sessions (training logs), Extra "
+                "Initiatives/Recognition (6E Clap and other recognitions), Passenger NPS Feedback "
+                "(NPS survey responses attributed to the crew member)."
                 "\n\nReturns detailed breakdown with individual scores, weights, and final aggregate score."
             ),
             "parameters": {
@@ -666,8 +666,61 @@ EMPLOYEE_SCORE_SELECT_SQL = """
     t4.[Please share your reasons for the rating]
 """
 
+# Scoring policy vertex name in the knowledge graph — the single source of truth
+# for weights/thresholds (see push_sop_policy_graph.py and
+# docs/sop_crew_performance.md). This constant is ONLY an emergency fallback if
+# the graph is unreachable; the graph value always takes priority.
+SCORING_POLICY_NODE_NAME = "Weighted Performance Scoring Policy"
 
-def _score_employee_row(employee_data: dict) -> dict:
+DEFAULT_SCORING_PARAMETERS = {
+    "availability": {"weight": 0.40, "penalty_per_leave_day": 10},
+    "appreciation": {"weight": 0.20, "points_per_letter": 10, "max_score": 100},
+    "bmi": {
+        "weight": 0.10,
+        "ideal_min": 18.5, "ideal_max": 24.9, "ideal_score": 100.0,
+        "near_min": 17.0, "near_max_low": 25.0, "near_max_high": 27.0, "near_score": 80.0,
+        "moderate_min": 16.0, "moderate_max": 30.0, "moderate_score": 60.0,
+        "far_score": 40.0,
+    },
+    "non_performance": {"weight": 0.10, "penalty_per_caution_letter": 20},
+    "nps": {"weight": 0.10, "scale_factor": 10},
+    "coaching": {"weight": 0.05, "points_per_session": 20, "max_score": 100},
+    "recognition": {"weight": 0.05, "clap_score": 100, "other_score": 80},
+}
+
+
+def _get_scoring_parameters(graph_db) -> dict:
+    """Fetch the weighted-scoring formula parameters from the knowledge graph's
+    Policy node — the single source of truth (see push_sop_policy_graph.py).
+
+    Falls back to DEFAULT_SCORING_PARAMETERS (kept in sync with the graph node at
+    push time) only if the graph is unreachable, so scoring never hard-fails —
+    but logs loudly, since a fallback means the graph and code could be drifting.
+    """
+    try:
+        details = graph_db.node_details(SCORING_POLICY_NODE_NAME)
+        props = (details or {}).get("node", {}).get("props", {})
+        raw = props.get("parameters")
+        if raw:
+            parsed = json.loads(raw)
+            logger.info(
+                f"Scoring parameters loaded from graph node '{SCORING_POLICY_NODE_NAME}' "
+                f"(availability.weight={parsed.get('availability', {}).get('weight')})"
+            )
+            return parsed
+        logger.warning(
+            f"Scoring policy node '{SCORING_POLICY_NODE_NAME}' has no 'parameters' "
+            f"property — using DEFAULT_SCORING_PARAMETERS fallback."
+        )
+    except Exception as e:
+        logger.warning(
+            f"Could not fetch scoring parameters from graph ({e}) — "
+            f"using DEFAULT_SCORING_PARAMETERS fallback."
+        )
+    return DEFAULT_SCORING_PARAMETERS
+
+
+def _score_employee_row(employee_data: dict, params: dict) -> dict:
     """Pure scoring function: compute the weighted performance score breakdown
     from one already-fetched, joined employee row (Indigo_HR_Raw_Data ⋈
     IJP_Employee_scores ⋈ CLMS_Raw_Data ⋈ IndigoNPS_Summary on IGA).
@@ -676,14 +729,15 @@ def _score_employee_row(employee_data: dict) -> dict:
     find_top_performing_crew (ranks all employees) so the formula never drifts
     between the two.
 
-    Formula:
-    - Crew Availability: 40%
-    - Poise & Grace (BMI): 10%
-    - Appreciation Letters: 20%
-    - Non-performance Discussions: 10%
-    - Curative Training/iCoach sessions: 5%
-    - Extra Initiatives/Recognition: 5%
-    - Passenger NPS Feedback: 10%
+    Weights and thresholds for all 7 components (Crew Availability, Poise & Grace/BMI,
+    Appreciation Letters, Non-performance Discussions, Curative Training/iCoach,
+    Extra Initiatives/Recognition, Passenger NPS Feedback) come entirely from `params`
+    (fetched from the graph's Policy node by the caller — see _get_scoring_parameters).
+    No weight/threshold values are hardcoded in this function.
+
+    Args:
+        employee_data: Joined HR/IJP/CLMS/NPS row for one employee
+        params: Scoring parameters dict from _get_scoring_parameters()
 
     Returns:
         Dictionary with "components", "total_score", "errors"
@@ -694,24 +748,26 @@ def _score_employee_row(employee_data: dict) -> dict:
         "errors": [],
     }
 
-    # BMI scoring: Ideal BMI 18.5-24.9 = 100%, outside range reduces score
+    # BMI scoring: params-driven ideal/near/moderate/far tiers
+    bmi_p = params["bmi"]
+    bmi_weight_pct = f"{bmi_p['weight'] * 100:.0f}%"
     bmi_value = employee_data.get("BMI")
     if bmi_value is not None:
         try:
             bmi_float = float(bmi_value)
-            if 18.5 <= bmi_float <= 24.9:
-                bmi_score = 100.0
-            elif 17.0 <= bmi_float < 18.5 or 25.0 <= bmi_float <= 27.0:
-                bmi_score = 80.0
-            elif 16.0 <= bmi_float < 17.0 or 27.0 < bmi_float <= 30.0:
-                bmi_score = 60.0
+            if bmi_p["ideal_min"] <= bmi_float <= bmi_p["ideal_max"]:
+                bmi_score = bmi_p["ideal_score"]
+            elif bmi_p["near_min"] <= bmi_float < bmi_p["ideal_min"] or bmi_p["near_max_low"] <= bmi_float <= bmi_p["near_max_high"]:
+                bmi_score = bmi_p["near_score"]
+            elif bmi_p["moderate_min"] <= bmi_float < bmi_p["near_min"] or bmi_p["near_max_high"] < bmi_float <= bmi_p["moderate_max"]:
+                bmi_score = bmi_p["moderate_score"]
             else:
-                bmi_score = 40.0
+                bmi_score = bmi_p["far_score"]
 
-            weighted_bmi = bmi_score * 0.10
+            weighted_bmi = bmi_score * bmi_p["weight"]
             score_components["components"].append({
                 "name": "Poise & Grace (BMI)",
-                "weight": "10%",
+                "weight": bmi_weight_pct,
                 "raw_value": bmi_float,
                 "normalized_score": bmi_score,
                 "weighted_score": weighted_bmi,
@@ -723,17 +779,18 @@ def _score_employee_row(employee_data: dict) -> dict:
     else:
         score_components["errors"].append("BMI data not available")
 
-    # Calculate Appreciation Letters Score (20% weight)
-    # Scoring: More letters = higher score (max 10 letters = 100%)
+    # Appreciation Letters — more letters = higher score, capped at max_score
+    appr_p = params["appreciation"]
+    appr_weight_pct = f"{appr_p['weight'] * 100:.0f}%"
     appreciation = employee_data.get("AppreciationLetters")
     if appreciation is not None:
         try:
             appreciation_count = int(appreciation)
-            appreciation_score = min(appreciation_count * 10, 100)  # 10 points per letter, max 100
-            weighted_appreciation = appreciation_score * 0.20
+            appreciation_score = min(appreciation_count * appr_p["points_per_letter"], appr_p["max_score"])
+            weighted_appreciation = appreciation_score * appr_p["weight"]
             score_components["components"].append({
                 "name": "Appreciation Letters",
-                "weight": "20%",
+                "weight": appr_weight_pct,
                 "raw_value": appreciation_count,
                 "normalized_score": appreciation_score,
                 "weighted_score": weighted_appreciation,
@@ -745,17 +802,18 @@ def _score_employee_row(employee_data: dict) -> dict:
     else:
         score_components["errors"].append("Appreciation letters data not available")
 
-    # Calculate Non-performance Discussions Score (10% weight)
-    # Scoring: Fewer is better (0 caution letters = 100%, each letter reduces score)
+    # Non-performance Discussions — fewer caution letters is better
+    np_p = params["non_performance"]
+    np_weight_pct = f"{np_p['weight'] * 100:.0f}%"
     caution = employee_data.get("CautionLetters")
     if caution is not None:
         try:
             caution_count = int(caution)
-            caution_score = max(100 - (caution_count * 20), 0)
-            weighted_caution = caution_score * 0.10
+            caution_score = max(100 - (caution_count * np_p["penalty_per_caution_letter"]), 0)
+            weighted_caution = caution_score * np_p["weight"]
             score_components["components"].append({
                 "name": "Non-performance Discussions",
-                "weight": "10%",
+                "weight": np_weight_pct,
                 "raw_value": caution_count,
                 "normalized_score": caution_score,
                 "weighted_score": weighted_caution,
@@ -768,17 +826,18 @@ def _score_employee_row(employee_data: dict) -> dict:
     else:
         score_components["errors"].append("Caution letters data not available")
 
-    # Calculate Curative Training/iCoach Sessions Score (5% weight)
-    # Scoring: More sessions = proactive improvement = higher score
+    # Curative Training/iCoach Sessions — more sessions = proactive improvement
+    coach_p = params["coaching"]
+    coach_weight_pct = f"{coach_p['weight'] * 100:.0f}%"
     coaching = employee_data.get("CoachingSessions")
     if coaching is not None:
         try:
             coaching_count = int(coaching)
-            coaching_score = min(coaching_count * 20, 100)
-            weighted_coaching = coaching_score * 0.05
+            coaching_score = min(coaching_count * coach_p["points_per_session"], coach_p["max_score"])
+            weighted_coaching = coaching_score * coach_p["weight"]
             score_components["components"].append({
                 "name": "Curative Training/iCoach Sessions",
-                "weight": "5%",
+                "weight": coach_weight_pct,
                 "raw_value": coaching_count,
                 "normalized_score": coaching_score,
                 "weighted_score": weighted_coaching,
@@ -790,20 +849,21 @@ def _score_employee_row(employee_data: dict) -> dict:
     else:
         score_components["errors"].append("Coaching sessions data not available")
 
-    # Calculate Extra Initiatives/Recognition Score (5% weight)
-    # Scoring: Recognition like "6e Clap" = bonus points
+    # Extra Initiatives/Recognition — "6E Clap" scores highest
+    rec_p = params["recognition"]
+    rec_weight_pct = f"{rec_p['weight'] * 100:.0f}%"
     recognition = employee_data.get("Recognition")
     if recognition is not None:
         recognition_str = str(recognition).strip()
         if recognition_str and recognition_str.lower() != "none" and recognition_str.lower() != "null":
             if "6e clap" in recognition_str.lower():
-                recognition_score = 100
+                recognition_score = rec_p["clap_score"]
             else:
-                recognition_score = 80
-            weighted_recognition = recognition_score * 0.05
+                recognition_score = rec_p["other_score"]
+            weighted_recognition = recognition_score * rec_p["weight"]
             score_components["components"].append({
                 "name": "Extra Initiatives/Recognition",
-                "weight": "5%",
+                "weight": rec_weight_pct,
                 "raw_value": recognition_str,
                 "normalized_score": recognition_score,
                 "weighted_score": weighted_recognition,
@@ -815,7 +875,9 @@ def _score_employee_row(employee_data: dict) -> dict:
     else:
         score_components["errors"].append("Recognition data not available")
 
-    # Crew Availability Score (40% weight) - from real CLMS leave data
+    # Crew Availability — from real CLMS leave data
+    avail_p = params["availability"]
+    avail_weight_pct = f"{avail_p['weight'] * 100:.0f}%"
     status = employee_data.get("Status")
     active = employee_data.get("Active")
     lwd = employee_data.get("LWD")
@@ -823,34 +885,34 @@ def _score_employee_row(employee_data: dict) -> dict:
     if status is None and active is None:
         score_components["components"].append({
             "name": "Crew Availability",
-            "weight": "40%",
+            "weight": avail_weight_pct,
             "raw_value": "Not available",
             "normalized_score": 0,
             "weighted_score": 0,
             "data_source": "CLMS_Raw_Data",
-            "note": "⚠️ No CLMS_Raw_Data record found for this employee (IGA)"
+            "note": "\u26a0\ufe0f No CLMS_Raw_Data record found for this employee (IGA)"
         })
         score_components["errors"].append("Crew Availability: no CLMS_Raw_Data record for this employee")
     elif status == "Released" or active == "N" or lwd is not None:
         score_components["components"].append({
             "name": "Crew Availability",
-            "weight": "40%",
+            "weight": avail_weight_pct,
             "raw_value": f"Status={status}, Active={active}, LWD={lwd}",
             "normalized_score": 0,
             "weighted_score": 0,
             "data_source": "CLMS_Raw_Data",
-            "note": "Crew member has been released / is inactive — availability is 0"
+            "note": "Crew member has been released / is inactive \u2014 availability is 0"
         })
         score_components["total_score"] += 0
     else:
         no_of_leaves = employee_data.get("NoOfLeaves")
         try:
             leaves_float = float(no_of_leaves) if no_of_leaves is not None else 0.0
-            availability_score = max(100 - (leaves_float * 10), 0)
-            weighted_availability = availability_score * 0.40
+            availability_score = max(100 - (leaves_float * avail_p["penalty_per_leave_day"]), 0)
+            weighted_availability = availability_score * avail_p["weight"]
             score_components["components"].append({
                 "name": "Crew Availability",
-                "weight": "40%",
+                "weight": avail_weight_pct,
                 "raw_value": f"{leaves_float} leave days (most recent request), "
                              f"balance {employee_data.get('Balance')} ({employee_data.get('LeaveType')})",
                 "normalized_score": availability_score,
@@ -862,7 +924,9 @@ def _score_employee_row(employee_data: dict) -> dict:
         except (ValueError, TypeError):
             score_components["errors"].append("Could not calculate availability from CLMS_Raw_Data.NoOfLeaves")
 
-    # Passenger NPS Feedback Score (10% weight) - from IndigoNPS_Summary
+    # Passenger NPS Feedback — from IndigoNPS_Summary
+    nps_p = params["nps"]
+    nps_weight_pct = f"{nps_p['weight'] * 100:.0f}%"
     nps_score = employee_data.get("NPS Score")
     crew_helpfulness = employee_data.get("Crew helpfulness")
     feedback_text = employee_data.get("Please share your reasons for the rating")
@@ -870,22 +934,22 @@ def _score_employee_row(employee_data: dict) -> dict:
     if nps_score is None:
         score_components["components"].append({
             "name": "Passenger NPS Feedback",
-            "weight": "10%",
+            "weight": nps_weight_pct,
             "raw_value": "Not available",
             "normalized_score": 0,
             "weighted_score": 0,
             "data_source": "IndigoNPS_Summary",
-            "note": "⚠️ No IndigoNPS_Summary record found for this employee (IGA)"
+            "note": "\u26a0\ufe0f No IndigoNPS_Summary record found for this employee (IGA)"
         })
         score_components["errors"].append("Passenger NPS Feedback: no IndigoNPS_Summary record for this employee")
     else:
         try:
             nps_float = float(nps_score)
-            nps_normalized = max(min(nps_float * 10, 100), 0)
-            weighted_nps = nps_normalized * 0.10
+            nps_normalized = max(min(nps_float * nps_p["scale_factor"], 100), 0)
+            weighted_nps = nps_normalized * nps_p["weight"]
             component = {
                 "name": "Passenger NPS Feedback",
-                "weight": "10%",
+                "weight": nps_weight_pct,
                 "raw_value": f"NPS Score {nps_float}/10"
                              + (f", Crew helpfulness {crew_helpfulness}/5" if crew_helpfulness not in (None, "No") else ""),
                 "normalized_score": nps_normalized,
@@ -904,15 +968,18 @@ def _score_employee_row(employee_data: dict) -> dict:
     return score_components
 
 
-def calculate_employee_score(db_manager: DatabaseConnectionManager, employee_identifier: str,
+def calculate_employee_score(db_manager: DatabaseConnectionManager, graph_db, employee_identifier: str,
                            identifier_type: str = "name") -> dict:
     """Calculate comprehensive weighted performance score for a single named employee.
 
     Fetches the joined HR/IJP/CLMS/NPS row for this employee and delegates the
     actual formula to _score_employee_row (shared with find_top_performing_crew).
+    Scoring weights/thresholds come from the graph's Policy node, not hardcoded
+    literals — see _get_scoring_parameters().
 
     Args:
         db_manager: Database connection manager
+        graph_db: Graph database instance (for fetching scoring parameters)
         employee_identifier: Employee name or IGA number
         identifier_type: 'name' or 'iga'
 
@@ -920,6 +987,7 @@ def calculate_employee_score(db_manager: DatabaseConnectionManager, employee_ide
         Dictionary with score breakdown and aggregate score
     """
     try:
+        params = _get_scoring_parameters(graph_db)
         if identifier_type.lower() == "iga":
             where_clause = f"t1.[IGA] = '{employee_identifier}'"
             identifier_display = f"IGA: {employee_identifier}"
@@ -946,7 +1014,7 @@ def calculate_employee_score(db_manager: DatabaseConnectionManager, employee_ide
 
         employee_data = hr_result["data"][0]
 
-        score_components = _score_employee_row(employee_data)
+        score_components = _score_employee_row(employee_data, params)
         score_components["employee_identifier"] = employee_identifier
         score_components["identifier_type"] = identifier_type
         score_components["employee_details"] = {
@@ -975,7 +1043,7 @@ def calculate_employee_score(db_manager: DatabaseConnectionManager, employee_ide
         }
 
 
-def find_top_performing_crew(db_manager: DatabaseConnectionManager, limit: int = 5,
+def find_top_performing_crew(db_manager: DatabaseConnectionManager, graph_db, limit: int = 5,
                               base: str | None = None, designation: str | None = None,
                               order: str = "best") -> dict:
     """Rank ALL crew members by the same weighted performance score used by
@@ -983,10 +1051,12 @@ def find_top_performing_crew(db_manager: DatabaseConnectionManager, limit: int =
 
     Fetches every employee's joined HR/IJP/CLMS/NPS row in a single query, scores
     each one with _score_employee_row (same formula, no drift), sorts by
-    total_score, and returns the top `limit`.
+    total_score, and returns the top `limit`. Scoring parameters are fetched from
+    the graph ONCE up front (not per-row) — see _get_scoring_parameters().
 
     Args:
         db_manager: Database connection manager
+        graph_db: Graph database instance (for fetching scoring parameters)
         limit: How many crew to return (default 5)
         base: Optional filter — only consider crew based at this location
         designation: Optional filter — only consider crew with this designation
@@ -996,6 +1066,7 @@ def find_top_performing_crew(db_manager: DatabaseConnectionManager, limit: int =
         Dictionary with ranked performers and how many crew were scored
     """
     try:
+        params = _get_scoring_parameters(graph_db)
         where_clauses = []
         if base:
             where_clauses.append(f"t1.[Base] = '{base}'")
@@ -1020,7 +1091,7 @@ def find_top_performing_crew(db_manager: DatabaseConnectionManager, limit: int =
 
         ranked = []
         for row in rows:
-            scored = _score_employee_row(row)
+            scored = _score_employee_row(row, params)
             ranked.append({
                 "name": row.get("Name", "Unknown"),
                 "iga": row.get("IGA", "Unknown"),
@@ -1586,12 +1657,14 @@ def dispatch_tool(graph_db, db_manager: DatabaseConnectionManager, name: str, ar
         case "calculate_employee_score":
             result = calculate_employee_score(
                 db_manager=db_manager,
+                graph_db=graph_db,
                 employee_identifier=args["employee_identifier"],
                 identifier_type=args.get("identifier_type", "name")
             )
         case "find_top_performing_crew":
             result = find_top_performing_crew(
                 db_manager=db_manager,
+                graph_db=graph_db,
                 limit=args.get("limit", 5),
                 base=args.get("base"),
                 designation=args.get("designation"),
@@ -1786,9 +1859,10 @@ iteration budget. find_top_performing_crew does all employees in a single query.
 ❌ **DO NOT construct manual queries to fetch raw metrics for either of the above!**
 
 **CRITICAL DIFFERENCE:**
-- **"Employee Score" (one named person)** = Weighted aggregate score (0-100) calculated using specific formula
+- **"Employee Score" (one named person)** = Weighted aggregate score (0-100), weights/thresholds
+  sourced live from the graph's Policy node (not fixed — don't assume specific percentages)
   - Uses calculate_employee_score tool
-  - Returns: BMI score (10%), Appreciation (20%), Availability (40%), NPS Feedback (10%), etc. → Total weighted score
+  - Returns: per-component breakdown (BMI, Appreciation, Availability, NPS Feedback, etc.) → Total weighted score
 
 - **"Best/Top/Worst performing crew" (comparison across many)** = Same formula, applied to every
   employee, then ranked
@@ -2459,7 +2533,11 @@ def extract_graph_hints(tool_name: str, result: Any) -> dict:
                           "source_db": src_db, "target_db": tgt_db})
 
     def _type_from_labels(labels: list) -> str:
-        return "Concept" if "Concept" in labels else "Table"
+        if "Concept" in labels:
+            return "Concept"
+        if "Policy" in labels:
+            return "Policy"
+        return "Table"
 
     try:
         match tool_name:
@@ -2571,7 +2649,10 @@ def extract_graph_hints(tool_name: str, result: Any) -> dict:
                                 _e(tables[i], tables[j], f"JOIN on {col}", "", "")
             
             # Scoring tools don't do graph exploration, but the score is built from
-            # a real 4-table JOIN — show those source tables so the panel isn't empty.
+            # a real 4-table JOIN plus the Policy vertex's live parameters — show
+            # both so the panel makes the actual data flow visible, not just the
+            # tables. This is the only visible confirmation (besides the log line
+            # in _get_scoring_parameters) that the SOP Policy node was consulted.
             case "calculate_employee_score" | "find_top_performing_crew":
                 sources = [
                     ("Indigo_HR_Raw_Data", "HRData"),
@@ -2585,6 +2666,11 @@ def extract_graph_hints(tool_name: str, result: Any) -> dict:
                     for j in range(i + 1, len(sources)):
                         _e(sources[i][0], sources[j][0], "JOIN on IGA",
                            sources[i][1], sources[j][1])
+
+                policy_name = SCORING_POLICY_NODE_NAME
+                _n(policy_name, "Policy", "Policy")
+                for name, db in sources:
+                    _e(name, policy_name, "GOVERNED_BY", db, "Policy")
 
             # Data retrieval tools don't generate graph hints
             case "get_sample_data" | "execute_query":
