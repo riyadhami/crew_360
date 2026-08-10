@@ -1,0 +1,56 @@
+[project]
+name = "crew-perf"
+version = "0.1.0"
+description = "Multi-agent crew performance scoring over a Snowflake-backed knowledge graph"
+requires-python = ">=3.11"
+
+dependencies = [
+    # LLM + embeddings (Azure OpenAI)
+    "openai>=1.12.0",
+    "azure-identity>=1.15.0",
+    "json-repair>=0.25.0",
+    # Graph (Cosmos DB Gremlin API)
+    "gremlinpython>=3.7.0",
+    # Data layer
+    "duckdb>=1.0.0",
+    "pandas>=2.2.0",
+    "pyarrow>=15.0.0",
+    # Stats for the weighting agent
+    "numpy>=1.26.0",
+    "scipy>=1.12.0",
+    # Config / models / CLI
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.6.0",
+    "PyYAML>=6.0",
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+# >=3.14 for PROGRAMMATIC_ACCESS_TOKEN — earlier connectors reject the
+# authenticator outright, so a PAT deployment fails at connect with "unknown
+# authenticator" rather than anything that points at the version.
+snowflake = ["snowflake-connector-python>=3.14.0"]
+api = ["fastapi>=0.110.0", "uvicorn>=0.29.0", "sse-starlette>=2.0.0"]
+docs = ["python-docx>=1.1.0", "pypdf>=4.0.0"]
+dev = ["pytest>=8.0.0", "ruff>=0.3.0"]
+
+[project.scripts]
+crewperf = "crew_perf.cli:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["crew_perf*"]
+
+# The web page is served from inside the package; without this an installed
+# build starts and then 404s on its own front end.
+[tool.setuptools.package-data]
+"crew_perf.api" = ["static/*"]
+"crew_perf.graph_visualiser" = ["static/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

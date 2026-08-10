@@ -1,0 +1,261 @@
+/* Graph Visualiser.
+ *
+ * Every custom property used here is declared by the page shell in
+ * `api/static/index.html`, so this tab inherits the one palette rather than
+ * introducing a second. The `gv-` prefix keeps the whole feature's styles
+ * greppable and stops it colliding with the chat's class names.
+ */
+
+.gv { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+
+/* ── toolbars ─────────────────────────────────────────────────────────────── */
+
+.gv-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 9px 16px; border-bottom: 1px solid var(--line); background: var(--bg);
+}
+.gv-bar2 { background: var(--bg-sunk); padding-top: 7px; padding-bottom: 7px; }
+.gv-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.gv-right { margin-left: auto; }
+
+.gv-search input {
+  width: 260px; font: inherit; font-size: 13.5px; color: var(--ink);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px;
+  background: var(--panel); outline: 0;
+}
+.gv-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.gv-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 999px;
+  padding: 4px 12px; font-size: 12.5px; color: var(--ink-2); cursor: pointer;
+  white-space: nowrap;
+}
+.gv-toggle:hover { border-color: #cfd5dd; color: var(--ink); }
+.gv-toggle[aria-pressed="true"] {
+  background: var(--accent-soft); border-color: #bcd9f7; color: var(--accent);
+}
+.gv-src[aria-pressed="true"] { background: var(--panel); border-color: #cfd5dd; color: var(--ink); }
+.gv-src[aria-pressed="false"] { opacity: .45; }
+
+.gv-select {
+  font: inherit; font-size: 12.5px; color: var(--ink-2); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; cursor: pointer;
+}
+
+.gv-slider {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink-3);
+}
+.gv-slider b { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.gv-slider input { width: 96px; accent-color: var(--accent); }
+
+/* ── layout ───────────────────────────────────────────────────────────────── */
+
+.gv-body { flex: 1; display: flex; min-height: 0; }
+.gv-canvas { flex: 1; position: relative; min-width: 0; background: var(--bg-sunk); }
+.gv-svg { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.gv-svg:active { cursor: grabbing; }
+
+.gv-count, .gv-legend {
+  position: absolute; font-size: 11.5px; color: var(--ink-3);
+  background: rgba(255, 255, 255, .9); border: 1px solid var(--line);
+  border-radius: 8px; padding: 5px 10px; pointer-events: none;
+}
+.gv-count { top: 10px; left: 12px; font-variant-numeric: tabular-nums; }
+.gv-legend { bottom: 12px; left: 12px; display: grid; gap: 4px; }
+.gv-legend div { display: flex; align-items: center; gap: 7px; }
+
+.gv-veil {
+  position: absolute; inset: 0; display: grid; place-content: center; gap: 6px;
+  justify-items: center; background: rgba(246, 247, 249, .82);
+  color: var(--ink-2); font-size: 14px; text-align: center; padding: 24px;
+}
+.gv-error { color: var(--bad); }
+.gv-error b { font-size: 15px; }
+.gv-error span { color: var(--ink-2); max-width: 460px; }
+.gv-hint code {
+  font-family: var(--mono); font-size: 12px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px;
+}
+
+/* ── swatches ─────────────────────────────────────────────────────────────── */
+
+.gv-swatch {
+  width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%;
+  background: var(--ink-3); display: inline-block;
+}
+.gv-sw-schema { background: var(--ink-2); }
+.gv-sw-table { background: var(--panel); border: 2px solid var(--ink-3); }
+.gv-sw-concept { border-radius: 1px; transform: rotate(45deg); background: var(--ink-3); }
+.gv-line { width: 16px; height: 0; border-top: 1.5px solid #94a3b8; display: inline-block; }
+.gv-line-cross { border-top-color: #c2384a; border-top-width: 2px; }
+.gv-line-dash { border-top-style: dashed; }
+
+/* ── the graph itself ─────────────────────────────────────────────────────── */
+
+.gv-edge { stroke: #cbd5e1; stroke-width: 1; }
+.gv-joins_to { stroke: #94a3b8; stroke-width: 1.3; }
+.gv-belongs_to { stroke: #d8dee7; stroke-width: 1; stroke-dasharray: 1 3; }
+.gv-contains { stroke: #e2e8f0; stroke-width: 1; }
+.gv-cross { stroke: #c2384a; stroke-width: 2; }
+.gv-unverified { stroke-dasharray: 5 4; }
+
+.gv-node { cursor: pointer; }
+.gv-node .gv-shape { transition: stroke-width .1s ease; }
+.gv-label {
+  fill: var(--ink-2); font-family: var(--sans); pointer-events: none;
+  paint-order: stroke; stroke: rgba(255, 255, 255, .92); stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.gv-schema .gv-label { fill: var(--ink); font-weight: 640; }
+.gv-concept .gv-label { fill: var(--ink-3); }
+
+/* Label density. Schema captions are always on — five of them, and they are
+   what makes the picture navigable. Table and concept captions come in as you
+   zoom past the point where they stop colliding, and are always on for whatever
+   is hovered, selected or matched by a search. */
+.gv-table .gv-label, .gv-concept .gv-label { opacity: 0; transition: opacity .12s ease; }
+.gv-labels-all .gv-table .gv-label,
+.gv-labels-all .gv-concept .gv-label { opacity: 1; }
+.gv-node.gv-near .gv-label,
+.gv-node.gv-focus .gv-label,
+.gv-node.gv-match .gv-label { opacity: 1; }
+.gv-svg.gv-labels-none .gv-label { opacity: 0; }
+
+/* Focus: everything that is not adjacent recedes. Opacity rather than display
+   so nothing moves — the point is to read the neighbourhood in place. */
+.gv-focused .gv-node { opacity: .12; }
+.gv-focused .gv-node.gv-near { opacity: 1; }
+.gv-focused .gv-edge { opacity: .05; }
+.gv-focused .gv-edge.gv-near { opacity: 1; stroke-width: 2.2; }
+.gv-node.gv-focus .gv-shape { stroke-width: 4; }
+
+.gv-searching .gv-node { opacity: .18; }
+.gv-searching .gv-node.gv-match { opacity: 1; }
+.gv-node.gv-match .gv-shape { stroke: var(--user); stroke-width: 4; }
+.gv-node.gv-match .gv-label { fill: var(--ink); font-weight: 640; }
+
+/* ── crew mode ────────────────────────────────────────────────────────────── */
+
+.gv-identifies { stroke: #ff6a55; stroke-width: 2; }
+.gv-sw-crew { background: #ff6a55; border-radius: 2px; transform: rotate(30deg); }
+.gv-sw-empty { background: var(--panel); border: 2px dashed #c4cbd4; }
+.gv-line-crew { border-top-color: #ff6a55; border-top-width: 2px; }
+
+/* A table this crew member has no row in stays on the page, drawn as an outline.
+   Removing it would answer "where does this person appear" by deleting the
+   evidence that they do not — which is the half of the answer that explains a
+   partial-coverage score. */
+.gv-crew-empty .gv-shape { opacity: .35; stroke-dasharray: 3 3; }
+.gv-crew-empty .gv-label { opacity: 0; }
+.gv-crew-holds .gv-shape { stroke-width: 3.4; }
+.gv-crew-unreadable .gv-shape { stroke: var(--warn); stroke-dasharray: 2 2; }
+
+.gv-crewpanel { border-top: 1px solid var(--line-soft); padding: 12px 0; }
+.gv-muted { color: var(--ink-3); font-size: 13px; }
+.gv-crewerr { color: var(--bad); font-size: 13px; }
+.gv-crewnotes {
+  margin: 12px 0 0; padding-left: 16px; font-size: 12px; color: var(--warn);
+}
+.gv-crewnotes li { margin: 4px 0; }
+
+.gv-bar-row {
+  display: grid; grid-template-columns: 84px 1fr 34px; gap: 8px;
+  align-items: center; font-size: 12px; margin: 3px 0;
+}
+.gv-bar-label { font-weight: 600; }
+.gv-bar-track {
+  height: 7px; background: var(--bg-sunk); border-radius: 999px; overflow: hidden;
+}
+.gv-bar-track i { display: block; height: 100%; border-radius: 999px; }
+.gv-bar-row b { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+.gv-empty-chip { opacity: .6; text-decoration: line-through; }
+
+.gv-crewrows {
+  margin-top: 10px; padding: 7px 10px; border-radius: 8px; font-size: 12.5px;
+}
+.gv-crewrows.has { background: var(--good-soft); color: var(--good); }
+.gv-crewrows.none { background: var(--bg-sunk); color: var(--ink-3); }
+
+/* ── side panel ───────────────────────────────────────────────────────────── */
+
+.gv-side {
+  width: 340px; flex: 0 0 340px; border-left: 1px solid var(--line);
+  background: var(--bg); overflow-y: auto; padding: 14px;
+}
+.gv-summary {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 5px 14px;
+  font-size: 12.5px; color: var(--ink-2); margin-bottom: 12px;
+}
+.gv-summary div { display: flex; justify-content: space-between; gap: 8px; }
+.gv-summary b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.gv-warn { font-size: 12px; color: var(--ink-2); margin-bottom: 12px; }
+.gv-warn summary { cursor: pointer; color: var(--warn); }
+.gv-warn ul { margin: 7px 0 0; padding-left: 16px; }
+.gv-warn li { margin: 4px 0; }
+
+.gv-inspector { border-top: 1px solid var(--line-soft); padding-top: 12px; }
+.gv-empty { color: var(--ink-3); font-size: 13px; }
+.gv-empty p { margin: 0 0 8px; }
+
+.gv-insp-top { display: flex; align-items: flex-start; gap: 8px; }
+.gv-insp-top h3 { margin: 2px 0 0; font-size: 16px; font-weight: 640; letter-spacing: -.01em; }
+.gv-kind {
+  font-size: 11px; font-weight: 640; text-transform: uppercase; letter-spacing: .05em;
+}
+.gv-id { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+.gv-x {
+  margin-left: auto; background: none; border: 0; cursor: pointer;
+  color: var(--ink-3); font-size: 13px; padding: 2px 4px; line-height: 1;
+}
+.gv-x:hover { color: var(--ink); }
+
+.gv-grain { margin: 9px 0 0; font-size: 13px; color: var(--ink); font-weight: 560; }
+.gv-desc { margin: 7px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
+
+.gv-facts {
+  display: grid; grid-template-columns: auto 1fr; gap: 3px 12px;
+  margin: 12px 0 0; font-size: 12.5px;
+}
+.gv-facts dt { color: var(--ink-3); }
+.gv-facts dd { margin: 0; color: var(--ink-2); }
+
+.gv-cols { margin-top: 14px; }
+.gv-cols h5 {
+  margin: 0 0 6px; font-size: 11px; font-weight: 640; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+.gv-cols h5 span {
+  font-weight: 500; color: var(--ink-3); background: var(--bg-sunk);
+  border-radius: 999px; padding: 1px 6px; margin-left: 4px;
+}
+.gv-chiprow { display: flex; flex-wrap: wrap; gap: 4px; }
+.gv-chiprow code, .gv-decode code {
+  font-family: var(--mono); font-size: 11px; color: var(--ink-2);
+  background: var(--bg-sunk); border: 1px solid var(--line-soft);
+  border-radius: 5px; padding: 1.5px 6px;
+}
+.gv-decode { display: flex; gap: 8px; align-items: baseline; margin: 4px 0; }
+.gv-decode span { font-size: 11.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+
+.gv-link {
+  display: block; width: 100%; text-align: left; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px;
+  margin-bottom: 5px; cursor: pointer;
+}
+.gv-link:hover { border-color: var(--accent); background: var(--accent-soft); }
+.gv-link-name { display: block; font-size: 12.5px; font-weight: 600; }
+.gv-link-meta {
+  display: block; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3);
+  margin-top: 1px; overflow-wrap: anywhere;
+}
+
+@media (max-width: 1000px) {
+  .gv-body { flex-direction: column; }
+  .gv-side { width: auto; flex: 0 0 auto; max-height: 45%; border-left: 0;
+             border-top: 1px solid var(--line); }
+  .gv-search input { width: 170px; }
+}

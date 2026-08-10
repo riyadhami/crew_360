@@ -1,0 +1,148 @@
+# Golden retrieval prompts (PLAN.md Phase 4 acceptance).
+#
+# Checks are on *properties* of the generated SQL and its result, not on exact
+# row equality. Exact-match assertions against an LLM-generated query break on
+# any harmless phrasing change while missing the failures that matter; the
+# properties below are the things that make an answer right or wrong.
+#
+#   must_reference   tables the query has to touch to be answering the question
+#   forbid_tables    tables whose presence means it misunderstood the question
+#   min_rows         result must not be empty (or must be exactly n)
+#   expect_no_data   the honest answer is "not available" — see `unanswerable`
+#   check            named extra assertion run by the harness
+
+queries:
+  - id: avg_mark_by_base
+    question: What is the average assessment mark for crew based at DEL?
+    must_reference: [MENTOR_FEEDBACK]
+    min_rows: 1
+    check: single_numeric_in_mark_range
+
+  - id: crew_recent_performance
+    question: How has IGA60042 been performing recently?
+    must_reference: [MENTOR_FEEDBACK]
+    min_rows: 1
+
+  - id: rank_worst_crew
+    question: Which 5 cabin crew have the lowest average assessment mark? Only include
+      crew with at least 4 submitted assessments.
+    must_reference: [MENTOR_FEEDBACK]
+    min_rows: 1
+    max_rows: 5
+
+  - id: rank_best_at_base
+    question: Rank the top 10 crew at BOM by average mark.
+    must_reference: [MENTOR_FEEDBACK]
+    min_rows: 1
+    max_rows: 10
+
+  - id: grade_distribution
+    question: How many assessments fall into each grade?
+    must_reference: [MENTOR_FEEDBACK]
+    min_rows: 2
+    check: grades_are_known_bands
+
+  - id: category_pass_rates
+    question: What is the pass rate for each assessment category?
+    must_reference: [PEP_QUESTION_FEEDBACK, PEP_QUESTIONS]
+    min_rows: 3
+    check: rates_are_proportions
+
+  - id: worst_questions
+    question: Which assessment questions are failed most often?
+    must_reference: [PEP_QUESTION_FEEDBACK, PEP_QUESTIONS]
+    min_rows: 1
+
+  # SAFETY_ACTION_PARAMETER is FALSE on all 345 rows of the delivered
+  # PEP_QUESTIONS extract, so the correct answer is an empty result — reached by
+  # asking the right question of the right tables, not by refusing. Requiring a
+  # row here demanded the agent invent findings the data does not contain.
+  - id: safety_failures
+    question: Which crew have failed a safety-action-parameter question in the last
+      six months?
+    must_reference: [PEP_QUESTION_FEEDBACK, PEP_QUESTIONS]
+    min_rows: 0
+
+  - id: assessment_counts
+    question: How many submitted assessments does each crew member have?
+    # Either source is defensible: PEP_SCHEDULER is the assessment event and
+    # carries STATUS; MENTOR_FEEDBACK is its outcome and exists only when
+    # submitted. Requiring one specifically would fail a correct answer.
+    must_reference_any: [MENTOR_FEEDBACK, PEP_SCHEDULER]
+    min_rows: 10
+
+  - id: designation_comparison
+    question: Do Leads score higher than Cabin Attendants on average?
+    must_reference: [MENTOR_FEEDBACK]
+    min_rows: 2
+
+  - id: mentor_severity
+    question: Which mentors give the lowest average marks?
+    must_reference: [MENTOR_FEEDBACK, PEP_SCHEDULER]
+    min_rows: 1
+
+  - id: question_marks_by_role
+    question: What are the marks for each question under the Lead A320 template?
+    must_reference: [PEP_QUESTIONS]
+    min_rows: 5
+
+  - id: improvement_areas
+    question: What improvement areas are recorded most often for crew at BLR?
+    must_reference: [MENTOR_FEEDBACK]
+    min_rows: 1
+
+  - id: cancelled_assessments
+    question: How many scheduled assessments were cancelled, and for what reasons?
+    must_reference: [PEP_SCHEDULER]
+    min_rows: 1
+
+  # ── ServiceNow crew feedback ──
+  # Counting the reports, or reading the counts off the category master, are both
+  # correct. Pinning one would fail the agent for choosing the cheaper query.
+  - id: sn_reports_by_category
+    question: How many ServiceNow crew reports were raised in each category?
+    must_reference_any: [SN_FLIGHT_REPORT, M_SN_CATEGORY]
+    min_rows: 5
+
+  - id: sn_crew_involvement
+    question: Which seat positions are named as involved in ServiceNow reports most
+      often?
+    must_reference: [SN_REPORT_CREW]
+    min_rows: 3
+
+  - id: sn_star_performers
+    question: Which crew members are named in the most star-performer reports?
+    must_reference: [SN_REPORT_CREW, SN_FLIGHT_REPORT]
+    min_rows: 1
+
+  - id: sn_service_deviations
+    question: How many reported flights recorded a service deviation, and how many
+      did not?
+    must_reference: [SN_SERVICE_CHECK]
+    min_rows: 1
+
+  # Crosses the identity bridge. ServiceNow names 14k crew and the modelled fleet
+  # is 800, so the honest answer covers only the overlap — the question is
+  # whether the agent joins on IGA rather than inventing a route.
+  #
+  # Reworded away from "the ServiceNow crew feedback extract". Once graph search
+  # started matching stored VALUES, `Crew Feedback` became visible as a literal
+  # SN_FLIGHT_REPORT.CATEGORY, and the agent reasonably read the question as
+  # "crew in that category" — answering from SN_REPORT_CREW rather than the crew
+  # master. That reading is correct for the words used; the words were the
+  # problem. The case is about the identity join, so it now names the crew
+  # master's grain instead of a phrase that collides with a category.
+  - id: sn_cross_source_overlap
+    question: How many distinct crew members appear in both EMPLOYEE_INFO and the
+      ServiceNow crew master?
+    must_reference: [M_SN_CREW]
+    min_rows: 1
+
+  # The honest-failure case. Duty hours live in COPS, which is not onboarded
+  # (PLAN.md O4a). Inventing a proxy here would be worse than returning nothing —
+  # the whole point of graph-grounding is that unavailable data stays unavailable.
+  - id: duty_hours_unavailable
+    question: How many duty hours did IGA60042 fly in the past month?
+    unanswerable: true
+    forbid_tables: [PEP_FLIGHT_DETAILS]
+    expect_no_data: true

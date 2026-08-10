@@ -1,0 +1,69 @@
+TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME,DATA_TYPE,COLUMN_DEFAULT,COMMENT
+SERVICENOW,SN_FLIGHT_REPORT,SN_REPORT_ID,VARCHAR,,"ServiceNow incident number, e.g. INC3083734. Primary key."
+SERVICENOW,SN_FLIGHT_REPORT,FLIGHT_DATE_TIME,TIMESTAMP_NTZ,,Scheduled departure of the flight the report is about.
+SERVICENOW,SN_FLIGHT_REPORT,CREATED_AT,TIMESTAMP_NTZ,,When the report was raised.
+SERVICENOW,SN_FLIGHT_REPORT,RESOLVED_AT,TIMESTAMP_NTZ,,When the incident was resolved; null while open.
+SERVICENOW,SN_FLIGHT_REPORT,REPORT_LAG_HOURS,FLOAT,,"Hours between the flight and the report being raised, as stated by the extract's own 'Delay in days' text."
+SERVICENOW,SN_FLIGHT_REPORT,RESOLUTION_HOURS,FLOAT,,Hours between raising and resolving; null while open.
+SERVICENOW,SN_FLIGHT_REPORT,FLEET_TYPE,VARCHAR,,"Aircraft family: 320, 321 or ATR."
+SERVICENOW,SN_FLIGHT_REPORT,LEAD_BASE,VARCHAR,,Home base of the operating lead.
+SERVICENOW,SN_FLIGHT_REPORT,STATION,VARCHAR,,Station the report was filed at.
+SERVICENOW,SN_FLIGHT_REPORT,SECTOR,VARCHAR,,"Route as flown, e.g. DEL-KTM."
+SERVICENOW,SN_FLIGHT_REPORT,ORIGIN,VARCHAR,,"Departure airport, split from the sector."
+SERVICENOW,SN_FLIGHT_REPORT,DESTINATION,VARCHAR,,"Arrival airport, split from the sector."
+SERVICENOW,SN_FLIGHT_REPORT,FLIGHT_NUMBER,VARCHAR,,"Commercial flight number, e.g. 6E-1153."
+SERVICENOW,SN_FLIGHT_REPORT,FLIGHT_REG,VARCHAR,,Aircraft registration.
+SERVICENOW,SN_FLIGHT_REPORT,CATEGORY,VARCHAR,,"Reported category, spelling normalised across the extract."
+SERVICENOW,SN_FLIGHT_REPORT,CATEGORY_CODE,VARCHAR,,Slug of CATEGORY; joins M_SN_CATEGORY.
+SERVICENOW,SN_FLIGHT_REPORT,SUB_CATEGORY,VARCHAR,,Reported sub-category.
+SERVICENOW,SN_FLIGHT_REPORT,SUB_CATEGORY_CODE,VARCHAR,,Slug of CATEGORY + SUB_CATEGORY; joins M_SN_CATEGORY.
+SERVICENOW,SN_FLIGHT_REPORT,POLARITY,VARCHAR,,"What the category says about the crew: APPRECIATION, SERVICE, OPERATIONAL, REPORTING or UNCLASSIFIED. A reading of the category only — it carries no weight and no severity."
+SERVICENOW,SN_FLIGHT_REPORT,STATE,VARCHAR,,"ServiceNow workflow state: Resolved, Assigned, In Progress, Canceled."
+SERVICENOW,SN_FLIGHT_REPORT,IS_RESOLVED,BOOLEAN,,TRUE when the incident reached a resolved state.
+SERVICENOW,SN_FLIGHT_REPORT,RESOLUTION_CODE,VARCHAR,,How it was closed; blank while open.
+SERVICENOW,SN_FLIGHT_REPORT,RESOLVED_BY,VARCHAR,,Resolver. 'Crew Portal Integration' means auto-acknowledged rather than worked by a person.
+SERVICENOW,SN_FLIGHT_REPORT,IS_AUTO_RESOLVED,BOOLEAN,,"TRUE when closed by the Crew Portal integration with no human handling — an acknowledgement, not an investigation."
+SERVICENOW,SN_FLIGHT_REPORT,HAS_BREACHED,BOOLEAN,,SLA breach flag as recorded.
+SERVICENOW,SN_FLIGHT_REPORT,CDLB_ENTRY_MADE,VARCHAR,,Whether a Cabin Defect Log Book entry was made.
+SERVICENOW,SN_FLIGHT_REPORT,CABIN_TYPE,VARCHAR,,"Cabin the event occurred in, where recorded."
+SERVICENOW,SN_FLIGHT_REPORT,DESCRIPTION,VARCHAR,,"Crew's situation/action/outcome narrative. Free text; quoted, never summarised into a score."
+SERVICENOW,SN_FLIGHT_REPORT,IFS_COMMENT_1,VARCHAR,,In-flight services follow-up note.
+SERVICENOW,SN_FLIGHT_REPORT,IFS_COMMENT_2,VARCHAR,,Second in-flight services follow-up note.
+SERVICENOW,SN_FLIGHT_REPORT,RESOLUTION_SHORT_DESCRIPTION,VARCHAR,,Closing note sent back to the reporter.
+SERVICENOW,SN_FLIGHT_REPORT,CREW_INVOLVED_RAW,VARCHAR,,"Seat positions the report names as involved, verbatim."
+SERVICENOW,SN_FLIGHT_REPORT,CX_CHAMPION_RAW,VARCHAR,,"Seat positions nominated customer-experience champion, verbatim."
+SERVICENOW,SN_FLIGHT_REPORT,CREW_POSITIONS_NAMED,NUMBER,,How many seat positions carry an IGA on this report.
+SERVICENOW,SN_FLIGHT_REPORT,UNRESOLVED_INVOLVED_POSITIONS,VARCHAR,,"Positions named as involved that the extract carries no crew column for (L2/R2 have none), so they cannot be attributed to a person."
+SERVICENOW,SN_FLIGHT_REPORT,P_IS_CURRENT,BOOLEAN,,SCD-2 currency flag. Always TRUE for a file extract; present so this source obeys the same currency rule as the warehouse sources.
+SERVICENOW,SN_FLIGHT_REPORT,LOAD_DATE,TIMESTAMP_NTZ,,When this extract was ingested.
+SERVICENOW,SN_REPORT_CREW,SN_REPORT_ID,VARCHAR,,The report this crew member operated. Joins SN_FLIGHT_REPORT.
+SERVICENOW,SN_REPORT_CREW,IGA,VARCHAR,,Crew identifier as spelled in every other source.
+SERVICENOW,SN_REPORT_CREW,POSITION,VARCHAR,,"Seat position: L1-L4, R1-R4, FO or CAPTAIN."
+SERVICENOW,SN_REPORT_CREW,IS_INVOLVED,BOOLEAN,,TRUE when the report names this seat position under 'Crew Involved'. Everyone else was on the flight but not named — being rostered is not being implicated.
+SERVICENOW,SN_REPORT_CREW,IS_CX_CHAMPION,BOOLEAN,,TRUE when this seat was nominated customer-experience champion.
+SERVICENOW,SN_REPORT_CREW,IS_CABIN_CREW,BOOLEAN,,"FALSE for flight-deck positions (FO, CAPTAIN), which are not assessed by the cabin-crew process."
+SERVICENOW,SN_REPORT_CREW,P_IS_CURRENT,BOOLEAN,,SCD-2 currency flag. Always TRUE for a file extract; present so this source obeys the same currency rule as the warehouse sources.
+SERVICENOW,SN_REPORT_CREW,LOAD_DATE,TIMESTAMP_NTZ,,When this extract was ingested.
+SERVICENOW,SN_SERVICE_CHECK,SN_REPORT_ID,VARCHAR,,The report this answer belongs to. Joins SN_FLIGHT_REPORT.
+SERVICENOW,SN_SERVICE_CHECK,CHECK_CODE,VARCHAR,,"Which check: THANK_YOU_SERVICE, SECOND_ROUND_FB_SERVICE, CABIN_SERVICE, SERVICE_COMPLETED, DEVIATION, COCKPIT_MEAL_REQUESTED, COCKPIT_MEAL_ON_GROUND."
+SERVICENOW,SN_SERVICE_CHECK,CHECK_VALUE,VARCHAR,,"The lead's answer, verbatim."
+SERVICENOW,SN_SERVICE_CHECK,IS_PASS,BOOLEAN,,TRUE when the answer meets the standard. DEVIATION is inverted: 'No' passes. Null when the answer is neither yes nor no.
+SERVICENOW,SN_SERVICE_CHECK,CHECK_COMMENT,VARCHAR,,"Free-text explanation, usually present only when the answer was not the expected one."
+SERVICENOW,SN_SERVICE_CHECK,P_IS_CURRENT,BOOLEAN,,SCD-2 currency flag. Always TRUE for a file extract; present so this source obeys the same currency rule as the warehouse sources.
+SERVICENOW,SN_SERVICE_CHECK,LOAD_DATE,TIMESTAMP_NTZ,,When this extract was ingested.
+SERVICENOW,M_SN_CREW,IGA,VARCHAR,,"Crew identifier. Primary key, and the join to every other source."
+SERVICENOW,M_SN_CREW,REPORT_COUNT,NUMBER,,Reported flights this crew member operated.
+SERVICENOW,M_SN_CREW,INVOLVED_COUNT,NUMBER,,Reports naming this crew member's position as involved.
+SERVICENOW,M_SN_CREW,FIRST_SEEN,TIMESTAMP_NTZ,,Earliest reported flight.
+SERVICENOW,M_SN_CREW,LAST_SEEN,TIMESTAMP_NTZ,,Latest reported flight.
+SERVICENOW,M_SN_CREW,IS_CABIN_CREW,BOOLEAN,,FALSE when only ever seen in a flight-deck seat.
+SERVICENOW,M_SN_CREW,P_IS_CURRENT,BOOLEAN,,SCD-2 currency flag. Always TRUE for a file extract; present so this source obeys the same currency rule as the warehouse sources.
+SERVICENOW,M_SN_CREW,LOAD_DATE,TIMESTAMP_NTZ,,When this extract was ingested.
+SERVICENOW,M_SN_CATEGORY,SUB_CATEGORY_CODE,VARCHAR,,Primary key: slug of category + sub-category.
+SERVICENOW,M_SN_CATEGORY,CATEGORY_CODE,VARCHAR,,Slug of the parent category.
+SERVICENOW,M_SN_CATEGORY,CATEGORY,VARCHAR,,"Category label, spelling normalised."
+SERVICENOW,M_SN_CATEGORY,SUB_CATEGORY,VARCHAR,,Sub-category label.
+SERVICENOW,M_SN_CATEGORY,POLARITY,VARCHAR,,"APPRECIATION, SERVICE, OPERATIONAL, REPORTING or UNCLASSIFIED."
+SERVICENOW,M_SN_CATEGORY,REPORT_COUNT,NUMBER,,Reports in this extract carrying this pair.
+SERVICENOW,M_SN_CATEGORY,P_IS_CURRENT,BOOLEAN,,SCD-2 currency flag. Always TRUE for a file extract; present so this source obeys the same currency rule as the warehouse sources.
+SERVICENOW,M_SN_CATEGORY,LOAD_DATE,TIMESTAMP_NTZ,,When this extract was ingested.
