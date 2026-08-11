@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crew Performance</title>
+<link rel="stylesheet" href="/visualiser/visualiser.css">
+<style>
+/* ── Light, and only light ────────────────────────────────────────────────
+   The page is read in briefing rooms and on shared screens, and a score that
+   has to be argued over is read on paper as often as not. One palette, tuned
+   for that, rather than a theme switch nobody sets. */
+:root{
+  --bg:#ffffff;
+  --bg-sunk:#f6f7f9;
+  --panel:#ffffff;
+  --line:#e4e7ec;
+  --line-soft:#eef0f3;
+  --ink:#171a1f;
+  --ink-2:#4b5563;
+  --ink-3:#79818d;
+  --accent:#1f7ae0;
+  --accent-soft:#eaf3fd;
+  --user:#ff6a55;
+  --good:#0f8a5f;
+  --good-soft:#e8f6f0;
+  --warn:#b45309;
+  --warn-soft:#fdf3e5;
+  --bad:#c2384a;
+  --bad-soft:#fdeef0;
+  --radius:10px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit}
+#root{height:100%}
+
+/* ── Frame ─────────────────────────────────────────────────────────────── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+.sidebar{
+  width:270px;flex:0 0 270px;background:var(--bg-sunk);
+  border-right:1px solid var(--line);display:flex;flex-direction:column;
+  padding:14px;gap:16px;transition:margin-left .18s ease;
+}
+.sidebar[data-open="false"]{margin-left:-270px}
+.side-top{display:flex;align-items:center;justify-content:space-between}
+.side-close{background:none;border:0;cursor:pointer;color:var(--ink-3);
+  padding:4px;border-radius:6px;line-height:0}
+.side-close:hover{background:#e9ecf1;color:var(--ink)}
+.side-label{font-size:12px;font-weight:600;color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:.05em}
+.side-btn{
+  width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);
+  border-radius:8px;padding:9px 12px;cursor:pointer;font-size:14px;
+}
+.side-btn:hover{border-color:#cfd5dd;background:#fcfcfd}
+.side-facts{font-size:13px;color:var(--ink-2);display:grid;gap:6px}
+.side-facts div{display:flex;justify-content:space-between;gap:10px}
+.side-facts b{font-weight:600;color:var(--ink)}
+.side-foot{margin-top:auto;font-size:12px;color:var(--ink-3);line-height:1.5}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.topbar{
+  height:52px;flex:0 0 52px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;padding:0 16px;background:var(--bg);
+}
+.icon-btn{background:none;border:0;cursor:pointer;color:var(--ink-2);
+  padding:6px;border-radius:6px;line-height:0}
+.icon-btn:hover{background:var(--bg-sunk);color:var(--ink)}
+.topbar h1{font-size:14px;font-weight:600;margin:0;letter-spacing:-.01em}
+.engine{margin-left:auto;font-size:12px;color:var(--ink-3);
+  border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+
+/* ── Tabs ──────────────────────────────────────────────────────────────────
+   Two views over the same knowledge graph: the conversation that reasons over
+   it, and the picture of it. Deliberately a tab rather than a mode switch on
+   the composer — the visualiser answers no question and takes no input, so
+   putting it behind the ask box would imply it did. */
+.tabs{display:flex;gap:2px;margin-left:10px}
+.tab{
+  background:none;border:0;cursor:pointer;font-size:13px;color:var(--ink-3);
+  padding:5px 11px;border-radius:8px;
+}
+.tab:hover{background:var(--bg-sunk);color:var(--ink-2)}
+.tab[aria-selected="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+
+/* The chat pane scrolls its own column; the visualiser fills the frame and
+   manages its own scrolling. Both need the height, neither may push the page. */
+.pane{flex:1;display:flex;flex-direction:column;min-height:0}
+
+/* ── Scroll region ─────────────────────────────────────────────────────── */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.column{max-width:780px;margin:0 auto;padding:34px 24px 8px}
+
+/* ── Welcome ───────────────────────────────────────────────────────────── */
+.hero h2{font-size:40px;line-height:1.1;letter-spacing:-.03em;margin:0 0 14px}
+.hero p{color:var(--ink-2);margin:0 0 26px;font-size:15.5px}
+.suggests{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.suggest{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:11px 15px;cursor:pointer;text-align:left;font-size:14.5px;color:var(--ink);
+  max-width:100%;
+}
+.suggest:hover{border-color:var(--accent);background:var(--accent-soft)}
+
+/* ── Messages ──────────────────────────────────────────────────────────── */
+.msg{display:flex;gap:12px;margin:22px 0}
+.avatar{
+  width:28px;height:28px;flex:0 0 28px;border-radius:7px;display:grid;
+  place-items:center;font-size:12px;font-weight:700;color:#fff;margin-top:2px;
+}
+.avatar.you{background:var(--user)}
+.avatar.bot{background:var(--panel);color:var(--ink-2);border:1px solid var(--line)}
+.bubble{min-width:0;flex:1}
+.msg.user .bubble{
+  background:var(--bg-sunk);border-radius:var(--radius);padding:11px 15px;
+}
+.prose{white-space:pre-wrap;overflow-wrap:anywhere}
+.prose p{margin:0 0 10px}
+.prose p:last-child{margin-bottom:0}
+.prose ul{margin:6px 0 10px;padding-left:20px}
+.prose li{margin:3px 0}
+.prose strong{font-weight:640}
+
+/* ── Progress ──────────────────────────────────────────────────────────── */
+.stages{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--ink-3)}
+.stage{display:flex;gap:8px;align-items:baseline}
+.stage b{font-weight:600;color:var(--ink-2);min-width:62px;
+  font-family:var(--mono);font-size:11.5px}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--accent);animation:pulse 1.1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+
+/* ── Reveal ────────────────────────────────────────────────────────────── */
+/* Everything that follows the streamed-in prose — crew cards, the table, the
+   detail toggles — waits for the text to finish, then eases in rather than
+   snapping into place. Buttons get an extra beat and their own stagger so
+   they read as a second, quieter arrival rather than part of the same pop. */
+@keyframes cpFadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cpPop{from{opacity:0;transform:translateY(3px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.reveal-in{animation:cpFadeUp .32s cubic-bezier(.16,.8,.24,1) both}
+.cards.reveal-in .card{opacity:0;animation:cpPop .32s cubic-bezier(.16,.8,.24,1) both}
+.cards.reveal-in .card:nth-child(1){animation-delay:.02s}
+.cards.reveal-in .card:nth-child(2){animation-delay:.08s}
+.cards.reveal-in .card:nth-child(3){animation-delay:.14s}
+.cards.reveal-in .card:nth-child(4){animation-delay:.20s}
+.cards.reveal-in .card:nth-child(5){animation-delay:.26s}
+.cards.reveal-in .card:nth-child(n+6){animation-delay:.30s}
+.detail.reveal-in{animation-delay:.1s}
+.detail.reveal-in .toggle{opacity:0;animation:cpPop .28s cubic-bezier(.16,.8,.24,1) both}
+.detail.reveal-in .toggle:nth-child(1){animation-delay:.2s}
+.detail.reveal-in .toggle:nth-child(2){animation-delay:.26s}
+.detail.reveal-in .toggle:nth-child(3){animation-delay:.32s}
+
+/* ── Crew cards ────────────────────────────────────────────────────────── */
+.cards{display:flex;flex-direction:column;gap:12px;margin:16px 0 4px}
+.card{border:1px solid var(--line);border-radius:12px;background:var(--panel);
+  padding:14px 16px}
+.card-top{display:flex;align-items:flex-start;gap:14px}
+.who{flex:1;min-width:0}
+.who h3{margin:0;font-size:16px;font-weight:640;letter-spacing:-.01em}
+.who .sub{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.score{text-align:right;flex:0 0 auto}
+.score .n{font-size:24px;font-weight:680;letter-spacing:-.02em;line-height:1.1}
+.score .n.g{color:var(--good)}
+.score .n.w{color:var(--warn)}
+.score .n.b{color:var(--bad)}
+.score .of{font-size:12px;color:var(--ink-3)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{font-size:11.5px;border-radius:999px;padding:2.5px 9px;border:1px solid transparent}
+.chip.n{background:var(--bg-sunk);color:var(--ink-2);border-color:var(--line-soft)}
+.chip.g{background:var(--good-soft);color:var(--good)}
+.chip.w{background:var(--warn-soft);color:var(--warn)}
+.chip.b{background:var(--bad-soft);color:var(--bad)}
+.reasons{margin-top:12px;display:grid;gap:9px}
+.reason-set h4{margin:0 0 4px;font-size:11.5px;font-weight:640;color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:.05em}
+.reason-set ul{margin:0;padding-left:16px}
+.reason-set li{margin:2px 0;font-size:14px;color:var(--ink-2)}
+
+/* ── Table ─────────────────────────────────────────────────────────────── */
+.tablewrap{border:1px solid var(--line);border-radius:10px;overflow:auto;
+  margin:14px 0 4px;max-height:380px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 11px;text-align:left;border-bottom:1px solid var(--line-soft);
+  white-space:nowrap}
+th{background:var(--bg-sunk);position:sticky;top:0;font-weight:600;font-size:12px;
+  color:var(--ink-2)}
+tr:last-child td{border-bottom:0}
+
+/* ── Detail disclosure ─────────────────────────────────────────────────── */
+.detail{margin-top:14px}
+.detail-bar{display:flex;gap:8px;flex-wrap:wrap}
+.toggle{
+  background:var(--panel);border:1px solid var(--line);border-radius:999px;
+  padding:4px 12px;font-size:12.5px;color:var(--ink-2);cursor:pointer;
+}
+.toggle:hover{border-color:#cfd5dd;color:var(--ink)}
+.toggle[aria-pressed="true"]{background:var(--accent-soft);border-color:#bcd9f7;
+  color:var(--accent)}
+.panel{border:1px solid var(--line);border-radius:10px;background:var(--bg-sunk);
+  padding:13px 15px;margin-top:10px}
+.panel h4{margin:0 0 7px;font-size:11.5px;font-weight:640;color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:.05em}
+.panel ul{margin:0 0 12px;padding-left:17px}
+.panel ul:last-child{margin-bottom:0}
+.panel li{font-size:13.5px;color:var(--ink-2);margin:3px 0}
+pre.sql{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.6;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:11px 13px;overflow-x:auto;color:#243b53;white-space:pre}
+.sigwrap{max-height:340px}
+.sig-group + .sig-group{margin-top:14px}
+.sig-who{font-size:13px;font-weight:640;margin-bottom:5px;color:var(--ink)}
+.sig{width:100%;font-size:12.5px}
+.sig th,.sig td{white-space:normal}
+.sig .id{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+.sig-more{margin-top:11px;font-size:12px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+
+/* ── Composer ──────────────────────────────────────────────────────────── */
+.composer-wrap{padding:10px 24px 22px;background:var(--bg)}
+.composer{
+  max-width:780px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;
+  border:1px solid var(--line);border-radius:12px;background:var(--panel);
+  padding:8px 8px 8px 14px;box-shadow:0 1px 2px rgba(16,24,40,.04);
+}
+.composer:focus-within{border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-soft)}
+.composer textarea{
+  flex:1;border:0;outline:0;resize:none;font:inherit;color:var(--ink);
+  background:transparent;max-height:170px;padding:5px 0;line-height:1.5;
+}
+.composer textarea::placeholder{color:var(--ink-3)}
+.send{
+  width:32px;height:32px;flex:0 0 32px;border-radius:8px;border:0;cursor:pointer;
+  background:var(--accent);color:#fff;display:grid;place-items:center;
+}
+.send:disabled{background:#d7dce3;cursor:not-allowed}
+.hint{max-width:780px;margin:8px auto 0;font-size:11.5px;color:var(--ink-3);
+  text-align:center}
+.err{border:1px solid #f2c4cc;background:var(--bad-soft);color:var(--bad);
+  border-radius:10px;padding:10px 13px;font-size:14px}
+
+@media (max-width:860px){
+  .sidebar{position:absolute;z-index:20;height:100%;box-shadow:0 8px 30px rgba(16,24,40,.12)}
+  .hero h2{font-size:32px}
+  .column{padding:24px 16px 8px}
+  .composer-wrap{padding:10px 16px 18px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="/static/vendor/react.production.min.js"></script>
+<script src="/static/vendor/react-dom.production.min.js"></script>
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+[console_scripts]
+crewperf = crew_perf.cli:app

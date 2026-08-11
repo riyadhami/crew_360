@@ -1,0 +1,12 @@
+TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME,DATA_TYPE,COLUMN_DEFAULT,COMMENT
+CAC,CAC_APPRECIATION,CAC_ID,NUMBER,,Row number within the extract. Primary key; the export carries no identifier of its own.
+CAC,CAC_APPRECIATION,IGA,VARCHAR,,"Crew identifier of the person appreciated, as spelled in every other source. The join to the rest of the system."
+CAC,CAC_APPRECIATION,FLIGHT_NO,VARCHAR,,Flight the appreciation relates to; null where the export did not record one.
+CAC,CAC_APPRECIATION,COMMENTS,VARCHAR,,What was written about the crew member. Free text — the substance of the appreciation.
+CAC,CAC_APPRECIATION,P_IS_CURRENT,BOOLEAN,,SCD-2 currency flag. Always TRUE for a file extract; present so this source obeys the same currency rule as the warehouse sources.
+CAC,CAC_APPRECIATION,LOAD_DATE,TIMESTAMP_NTZ,,When this extract was ingested.
+CAC,M_CAC_CREW,IGA,VARCHAR,,"Crew identifier. Primary key, and the join to every other source. No name is carried: this source identifies a crew member by IGA and by nothing else."
+CAC,M_CAC_CREW,APPRECIATION_COUNT,NUMBER,,Appreciation letters recorded for this crew member.
+CAC,M_CAC_CREW,FLIGHTS_NAMED,NUMBER,,Distinct flights those appreciations name.
+CAC,M_CAC_CREW,P_IS_CURRENT,BOOLEAN,,SCD-2 currency flag. Always TRUE for a file extract; present so this source obeys the same currency rule as the warehouse sources.
+CAC,M_CAC_CREW,LOAD_DATE,TIMESTAMP_NTZ,,When this extract was ingested.

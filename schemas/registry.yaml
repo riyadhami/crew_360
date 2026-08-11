@@ -1,0 +1,146 @@
+# Source registry — what schemas exist, how they join, and what is out of scope.
+#
+# The ONLY schema inputs are the CSVs in this directory. Nothing is read from
+# elsewhere in the repo: no table-level description exports, no relationship
+# files, no domain guidance. If a fact is not in one of these CSVs or declared
+# here, the system infers it from data or reports that it does not know.
+#
+# Each CSV is a column-level Snowflake export:
+#   TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, COMMENT
+
+sources:
+  - name: PEP
+    engine: snowflake
+    detail: columns
+    schema_file: pep_schema.csv
+    join_key: IGA
+    crew_master: EMPLOYEE_INFO         # the table one row of which IS a crew member
+    relevance_gate: false              # 10 tables, wholly on-topic
+    onboarded: true
+    context: >
+      Crew Performance Evaluation and Planning. The assessment chain: templates by
+      designation and fleet, categories within a template, a question bank with per-role
+      mark columns, boolean question answers, mentor feedback carrying an overall mark
+      and grade, a deviation matrix mapping mark ranges to grades, and the flight the
+      assessment was carried out on. This is the system of record for how a crew member
+      was assessed.
+
+  - name: CLMS
+    engine: snowflake
+    detail: columns
+    schema_file: clms_schema.csv
+    join_key: CREW_ID
+    crew_master: M_CLMS_CREW
+    relevance_gate: false              # 15 tables, leave domain is on-topic throughout
+    onboarded: true
+    context: >
+      Crew Leave Management System. Leave requests and their per-type detail, leave
+      balances, ground-duty codes, attrition records, special appreciations, base
+      transfers and swaps, and the crew master. Supplies availability and recognition
+      signals PEP has no visibility of. Joins on CREW_ID, not IGA.
+
+  - name: ServiceNow
+    engine: servicenow                 # a file extract, not a warehouse schema
+    detail: columns
+    schema_file: servicenow_schema.csv
+    join_key: IGA
+    crew_master: M_SN_CREW
+    relevance_gate: false              # 5 tables, all of them crew feedback
+    onboarded: true
+    context: >
+      ServiceNow incidents raised through the Crew Portal — the crew's own reports
+      about a flight, with the operating crew named by seat position, a category and
+      sub-category, the situation/action/outcome narrative, the lead's service
+      checklist, and how the incident was resolved. This is the only source carrying
+      first-hand crew feedback and customer-facing service outcomes; PEP records what
+      a mentor observed on one assessed flight, this records what happened on the
+      line. Ingested from servicenow/servicenow_response.csv by `crewperf ingest-servicenow`.
+
+  - name: CrewPortal
+    engine: snowflake
+    detail: columns
+    schema_file: crewportal_schema.csv
+    join_key: IGA
+    crew_master: M_CREW_DETAILS
+    relevance_gate: true               # documents and checklists carry no performance signal
+    onboarded: true
+    context: >
+      Crew self-service and flight-reporting portal. Flight issue reports with per-position
+      crew attribution, issue categories, flight process compliance, crew check-in, alert
+      and document acknowledgements, and the crew master. The issue reports are the closest
+      thing to a complaint record.
+
+  - name: CAC
+    engine: cac                        # a spreadsheet extract, not a warehouse schema
+    detail: columns
+    schema_file: cac_schema.csv
+    join_key: IGA
+    crew_master: M_CAC_CREW
+    relevance_gate: false              # 2 tables, both on-topic
+    onboarded: true
+    context: >
+      Appreciation letters raised through the Crew Appreciation Centre and delivered
+      as a spreadsheet export. One row is one letter recorded for one crew member,
+      carrying the flight it relates to and what was written. Only the crew
+      identifier, the flight number and the comment text are loaded — the export also
+      names the person appreciated, the initiator and the approver, and those are
+      excluded because personal data is hashed behind the identifier everywhere else.
+      This is a second, independent record of recognition beside CLMS appreciations
+      and ServiceNow's star-performer reports. Ingested from cac/*.xlsx by
+      `crewperf ingest-cac`.
+
+# ── Descoped ────────────────────────────────────────────────────────────────
+# COPS (rosters, duty and flight hours, sectors operated) is OUT OF SCOPE. It is
+# not awaited — duty hours and flights completed are simply not answerable, and
+# anything asking for them must say so rather than approximate from flight or
+# assessment rows.
+descoped_sources:
+  - name: COPS
+    reason: out of scope by decision, not pending delivery
+    would_have_supplied: [duty hours, flight hours, sectors operated, roster assignments]
+
+# ── Curated relationships ───────────────────────────────────────────────────
+# The one input that is not a column dump: a human statement of which columns
+# actually join, per report, with the reason each table was selected. The source
+# systems ship no foreign keys, so without this every edge below the identity
+# spine is inferred from column naming — which finds the joins whose names agree
+# and misses the ones that do not (FLIGHT_TYPE_ID -> M_AIRCRAFT.AIRCRAFT_ID is a
+# real relationship that no name heuristic can see).
+#
+# Names in it are the report author's casing, not the warehouse's, and it also
+# documents tables outside the three scoped exports. Both are handled at load:
+# names are resolved against the exports, and whatever does not resolve is
+# reported rather than dropped. `db_names` maps its DB column onto source names.
+relationships:
+  file: CrewPerformance_Metadata.csv
+  db_names:
+    PEP: PEP
+    CLMS: CLMS
+    Crew Portal: CrewPortal
+
+# ── Identity resolution ─────────────────────────────────────────────────────
+# PEP and CrewPortal key on IGA; CLMS keys on CREW_ID. They are different
+# identifiers related by a lookup, NOT the same value in two spellings — and
+# CREWPORTAL.M_CREW_DETAILS is the only table carrying both, which makes it the
+# bridge. Joining CLMS.CREW_ID straight to PEP.IGA returns zero rows silently.
+identity:
+  canonical_key: IGA
+  bridge:
+    table: M_CREW_DETAILS
+    source: CrewPortal
+    from_column: CREW_ID
+    to_column: IGA
+  aliases:
+    PEP: IGA
+    CLMS: CREW_ID
+    CrewPortal: IGA
+    ServiceNow: IGA
+  # Column spellings that all mean "this crew member". Without these the sources
+  # cannot be joined at all: an identity key rarely resembles its own table name,
+  # so name-similarity inference is worst at the most important relationship.
+  alias_columns:
+    IGA: [IGA, CREW_IGA, IGA_CODE]
+    CREW_ID: [CREW_ID, EMP_NO]
+    # Flight issues attribute up to seven crew by seat position; each is an IGA.
+    positional: [L1_IGA, L2_IGA, R1_IGA, R2_IGA, CAPT_IGA, FO_IGA, ACM_IGA]
+  min_coverage_warn: 0.80

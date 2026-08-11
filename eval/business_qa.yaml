@@ -1,0 +1,409 @@
+# Business question/answer pairs — easy, medium, hard.
+#
+# Every question is about CREW PERFORMANCE and how crew are scored — how an
+# individual is doing, who is weakest, which performance area is soft, and what
+# the scoring mechanisms do and do not support. Questions about how much data
+# exists belong in the golden retrieval set, not here.
+#
+# Every answer here was COMPUTED from the loaded dataset, not written from
+# memory, and every one carries a `verify` block that recomputes it. Run
+# `crewperf business-qa` to check the pairs still hold: an answer that has
+# drifted from the data is worse than no answer, because it reads exactly like
+# a correct one.
+#
+# Difficulty is about what it takes to answer, not about wording:
+#   easy    one table, one aggregate, no judgement
+#   medium  a join or a per-crew grain, and a filter that has to be right
+#   hard    crosses sources or scoring mechanisms, and the honest answer needs
+#           a caveat about coverage, attribution or which mechanism was used
+#
+# `verify.kind`:
+#   sql        (default) run the query, compare the named columns
+#   mechanism  recompute from the saved weightsets and the attribute frame
+
+
+pairs:
+  # ── EASY ────────────────────────────────────────────────────────────────
+  - id: e1_how_is_one_crew_member_performing
+    difficulty: easy
+    question: How is IGA60024 performing?
+    sources: [PEP]
+    answer: >
+      Kavya Singh (BOM, Lead) has 9 completed assessments averaging 88.91 out of 100,
+      modal grade C — the bottom band of a three-band scale on which C still passes.
+      That is roughly 5.6 marks below the fleet average of 94.50, and 9 assessments is
+      comfortably enough to rank her on. Her scorecard also carries a recurring
+      improvement area across assessments, which is a stronger signal than any single
+      mark.
+    verify:
+      sql: |
+        SELECT COUNT(*) AS assessments,
+               ROUND(AVG(TRY_CAST(mf.MARK AS DOUBLE)), 2) AS avg_mark
+        FROM MENTOR_FEEDBACK mf
+        JOIN PEP_SCHEDULER ps ON mf.PEP_SCHDULER_ID = ps.PEP_SCHDULER_ID
+        WHERE mf.P_IS_CURRENT = TRUE AND ps.P_IS_CURRENT = TRUE AND ps.STATUS = 2
+          AND mf.IGA = 'IGA60024'
+        LIMIT 1
+      expect:
+        assessments: {equals: 9}
+        avg_mark: {close_to: 88.91, tolerance: 0.05}
+
+  - id: e2_grade_distribution
+    difficulty: easy
+    question: What is the spread of performance grades across the fleet?
+    sources: [PEP]
+    answer: >
+      A 47.5% (2,453 assessments), B 26.8% (1,386), C 25.7% (1,327). The scale is
+      A/B/C and C is the lowest PASSING grade — there is no failing band, so "a
+      quarter graded C" is not a quarter of the fleet failing. It also means the
+      grade alone cannot separate a struggling crew member from a merely average
+      one, which is why scoring works off the mark and the underlying answers.
+    verify:
+      sql: |
+        SELECT mf.GRADE AS grade, COUNT(*) AS n
+        FROM MENTOR_FEEDBACK mf
+        JOIN PEP_SCHEDULER ps ON mf.PEP_SCHDULER_ID = ps.PEP_SCHDULER_ID
+        WHERE mf.P_IS_CURRENT = TRUE AND ps.P_IS_CURRENT = TRUE AND ps.STATUS = 2
+          AND mf.GRADE = 'A'
+        GROUP BY 1 LIMIT 1
+      expect:
+        n: {equals: 2453}
+
+  - id: e3_fleet_performance_spread
+    difficulty: easy
+    question: How much do crew actually differ in assessment performance?
+    sources: [PEP]
+    answer: >
+      Very little at the top and a long tail at the bottom. Across 800 crew the mean
+      of their own averages is 94.50 with a standard deviation of 3.10; the best sits
+      at 100.0 and the weakest at 77.18, on a median of 6 assessments each. Most crew
+      are packed into a few marks, so a ranking on the raw mark separates the tail
+      well and the middle barely at all — that compression is the reason the
+      composite normalises each attribute against the peer population instead of
+      reporting the mark.
+    verify:
+      sql: |
+        SELECT COUNT(*) AS crew,
+               ROUND(MIN(m), 2) AS lowest,
+               ROUND(MAX(m), 2) AS highest,
+               ROUND(AVG(m), 2) AS fleet_avg
+        FROM (
+          SELECT mf.IGA, AVG(TRY_CAST(mf.MARK AS DOUBLE)) AS m
+          FROM MENTOR_FEEDBACK mf
+          JOIN PEP_SCHEDULER ps ON mf.PEP_SCHDULER_ID = ps.PEP_SCHDULER_ID
+          WHERE mf.P_IS_CURRENT = TRUE AND ps.P_IS_CURRENT = TRUE AND ps.STATUS = 2
+          GROUP BY 1
+        ) LIMIT 1
+      expect:
+        crew: {equals: 800}
+        lowest: {close_to: 77.18, tolerance: 0.05}
+        highest: {close_to: 100.0, tolerance: 0.05}
+        fleet_avg: {close_to: 94.50, tolerance: 0.05}
+
+  - id: e4_who_can_be_ranked
+    difficulty: easy
+    question: How many crew have been assessed enough to be ranked on performance?
+    sources: [PEP]
+    answer: >
+      712 of 800 have 4 or more completed assessments and can be ranked. 77 have two
+      or three — usable, with the sample size stated — and 11 have fewer than two,
+      which is reported as indicative only and is not a basis for ranking. Scoring
+      someone on one assessment produces a number with the same number of decimal
+      places as everyone else's and none of the confidence, so the scorecard
+      downgrades it rather than hiding the difference.
+    verify:
+      sql: |
+        SELECT SUM(CASE WHEN n >= 4 THEN 1 ELSE 0 END) AS sufficient,
+               SUM(CASE WHEN n BETWEEN 2 AND 3 THEN 1 ELSE 0 END) AS usable,
+               SUM(CASE WHEN n < 2 THEN 1 ELSE 0 END) AS indicative
+        FROM (
+          SELECT mf.IGA, COUNT(*) AS n
+          FROM MENTOR_FEEDBACK mf
+          JOIN PEP_SCHEDULER ps ON mf.PEP_SCHDULER_ID = ps.PEP_SCHDULER_ID
+          WHERE mf.P_IS_CURRENT = TRUE AND ps.P_IS_CURRENT = TRUE AND ps.STATUS = 2
+          GROUP BY 1
+        ) LIMIT 1
+      expect:
+        sufficient: {equals: 712}
+        usable: {equals: 77}
+        indicative: {equals: 11}
+
+  - id: e5_weakest_performance_area
+    difficulty: easy
+    question: Which performance area is weakest across the fleet?
+    sources: [PEP]
+    answer: >
+      Cabin Management (cleanliness), at a 92.0% pass rate — the lowest of the seven
+      assessed areas. Inspiring Leadership follows at 93.0% and Poise & Grace at
+      93.3%; Time Management is strongest at 96.3%. The whole range is four points
+      wide, so these separate the areas more convincingly than they separate crew:
+      an area everyone passes at 96% carries almost no information about who is
+      strong, which is exactly the test both scoring mechanisms apply before letting
+      a signal carry weight.
+    verify:
+      sql: |
+        SELECT q.CATEGORY_CODE AS category,
+               ROUND(AVG(CASE WHEN f.FEEDBACK = 'true' THEN 1.0 ELSE 0.0 END), 4) AS pass_rate
+        FROM PEP_QUESTION_FEEDBACK f
+        JOIN PEP_QUESTIONS q ON q.QUESTION_ID = f.QUESTION_ID
+        WHERE f.P_IS_CURRENT = TRUE AND q.P_IS_CURRENT = TRUE
+        GROUP BY 1 ORDER BY 2 ASC LIMIT 1
+      expect:
+        category: {equals: CLEANLINESS}
+        pass_rate: {close_to: 0.9203, tolerance: 0.002}
+
+  # ── MEDIUM ──────────────────────────────────────────────────────────────
+  - id: m1_weakest_crew_on_the_mark
+    difficulty: medium
+    question: Who are the weakest crew on their recorded assessment marks?
+    sources: [PEP]
+    answer: >
+      Among crew with at least 4 completed assessments: Dev Khanna (IGA60650, PNQ, CA)
+      at 77.18 over 9 assessments, Rahul Malhotra (IGA60143, AMD, LD) at 79.89 over 6,
+      and Rohit Singh (IGA60516, DEL, CA) at 80.76 over 7. The minimum-assessment
+      filter is not a detail: without it the bottom of the list fills with crew who
+      have one assessment, where a single hard flight and genuine weak performance are
+      indistinguishable. This is the native track — the airline's own number — and it
+      can rank differently from the business-weighted composite.
+    verify:
+      sql: |
+        SELECT p.IGA AS iga, ROUND(p.m, 2) AS avg_mark, p.n AS assessments
+        FROM (
+          SELECT mf.IGA, COUNT(*) AS n, AVG(TRY_CAST(mf.MARK AS DOUBLE)) AS m
+          FROM MENTOR_FEEDBACK mf
+          JOIN PEP_SCHEDULER ps ON mf.PEP_SCHDULER_ID = ps.PEP_SCHDULER_ID
+          WHERE mf.P_IS_CURRENT = TRUE AND ps.P_IS_CURRENT = TRUE AND ps.STATUS = 2
+          GROUP BY 1 HAVING COUNT(*) >= 4
+        ) p
+        ORDER BY p.m ASC LIMIT 1
+      expect:
+        iga: {equals: IGA60650}
+        avg_mark: {close_to: 77.18, tolerance: 0.05}
+        assessments: {equals: 9}
+
+  - id: m2_most_failed_question
+    difficulty: medium
+    question: Which assessed behaviour do crew fail most often?
+    sources: [PEP]
+    answer: >
+      "Thank You Round — Gratitude in action & words, special acknowledgement for all
+      NPS customers" (Customer Focus), failed 324 times, about 9.9% of the times it
+      was asked. Next are effective communication with specific customers (313) and
+      lavatory cleanliness upkeep (306). A question this discriminating is worth more
+      to a scoring mechanism than the aggregate mark it feeds: it names a coachable
+      behaviour, where the mark only says the crew member is below average.
+    verify:
+      sql: |
+        SELECT q.CATEGORY_CODE AS category, COUNT(*) AS failures
+        FROM PEP_QUESTION_FEEDBACK f
+        JOIN PEP_QUESTIONS q ON q.QUESTION_ID = f.QUESTION_ID
+        WHERE f.P_IS_CURRENT = TRUE AND q.P_IS_CURRENT = TRUE AND f.FEEDBACK = 'false'
+        GROUP BY q.QUESTION_ID, q.CATEGORY_CODE ORDER BY 2 DESC LIMIT 1
+      expect:
+        category: {equals: INFLIGHTEXP}
+        failures: {equals: 324}
+
+  - id: m3_leads_versus_cabin_attendants
+    difficulty: medium
+    question: Do leads perform better than cabin attendants?
+    sources: [PEP]
+    answer: >
+      No measurable difference: 179 leads average 94.55 against 621 cabin attendants
+      at 94.51 — four hundredths of a mark. The comparison is weaker than it looks
+      even so, because the two roles are assessed on DIFFERENT templates with
+      different questions and mark allocations, and leads answer an Inspiring
+      Leadership section that cabin attendants are never asked. Two marks out of 100
+      computed from different forms are not on one scale, so this is a reason not to
+      rank the roles against each other rather than a finding that they are equal.
+    verify:
+      sql: |
+        SELECT e.DESIGNATION AS designation,
+               COUNT(DISTINCT mf.IGA) AS crew,
+               ROUND(AVG(TRY_CAST(mf.MARK AS DOUBLE)), 2) AS avg_mark
+        FROM MENTOR_FEEDBACK mf
+        JOIN PEP_SCHEDULER ps ON mf.PEP_SCHDULER_ID = ps.PEP_SCHDULER_ID
+        JOIN EMPLOYEE_INFO e ON e.IGA = mf.IGA AND e.P_IS_CURRENT = TRUE
+        WHERE mf.P_IS_CURRENT = TRUE AND ps.P_IS_CURRENT = TRUE AND ps.STATUS = 2
+          AND e.DESIGNATION = 'LD'
+        GROUP BY 1 LIMIT 1
+      expect:
+        crew: {equals: 179}
+        avg_mark: {close_to: 94.55, tolerance: 0.05}
+
+  - id: m4_crew_most_named_in_service_issues
+    difficulty: medium
+    question: Which crew are named most often in customer-facing service issues on
+      flights they operated?
+    sources: [ServiceNow, PEP]
+    answer: >
+      Of crew with at least 5 reported flights, Deepika Saxena (IGA60710) is named in
+      12 of 15 — 80% — followed by Aarav Kapoor (IGA60002) at 62.5% and Dev Khanna
+      (IGA60650) at 60%. Two caveats decide whether this is actionable. The rate is
+      over the crew member's OWN reported flights, so a busy lead is not penalised for
+      volume; and a report names a seat, not a fault — high involvement can mean a
+      heavily-reported route. Only 144 of 800 crew appear in the feedback extract at
+      all, so this ranks 18% of the fleet.
+    verify:
+      sql: |
+        SELECT p.IGA AS iga, p.flights AS flights, p.service_named AS service_named
+        FROM (
+          SELECT cr.IGA, COUNT(*) AS flights,
+                 SUM(CASE WHEN cr.IS_INVOLVED AND r.POLARITY = 'SERVICE' THEN 1 ELSE 0 END)
+                     AS service_named
+          FROM SN_REPORT_CREW cr
+          JOIN SN_FLIGHT_REPORT r ON r.SN_REPORT_ID = cr.SN_REPORT_ID AND r.P_IS_CURRENT = TRUE
+          JOIN EMPLOYEE_INFO e ON e.IGA = cr.IGA AND e.P_IS_CURRENT = TRUE
+          WHERE cr.P_IS_CURRENT = TRUE AND cr.IS_CABIN_CREW = TRUE
+          GROUP BY 1 HAVING COUNT(*) >= 5
+        ) p
+        ORDER BY 1.0 * p.service_named / p.flights DESC LIMIT 1
+      expect:
+        iga: {equals: IGA60710}
+        flights: {equals: 15}
+        service_named: {equals: 12}
+
+  - id: m5_does_leave_track_performance
+    difficulty: medium
+    question: Do crew who take more leave perform worse?
+    sources: [CLMS, PEP]
+    answer: >
+      Weakly, yes, in this data: Spearman rho -0.195 (p < 1e-7) across 750 crew, with
+      the least-leave quartile averaging 95.07 against 93.78 for the most-leave
+      quartile — 1.3 marks. Real but small, and it explains under 4% of the variance
+      in performance, so it is not a basis for a decision about an individual. Leave
+      is also availability rather than performance: the honest reading is that the two
+      move together slightly, not that leave causes weaker flying. [Synthetic data on
+      both sides — the association is a property of this dataset.]
+    verify:
+      kind: mechanism
+      expect:
+        rho_leave_vs_mark: {close_to: -0.195, tolerance: 0.03}
+        n_leave_and_mark: {at_least: 700}
+
+  # ── HARD ────────────────────────────────────────────────────────────────
+  - id: h1_do_complaints_track_marks
+    difficulty: hard
+    question: Do crew who get named in customer service issues also score worse on
+      their assessments?
+    sources: [ServiceNow, PEP]
+    answer: >
+      No — and the premise of the question does not survive contact with the data.
+      Across the 144 crew measurable on both, Spearman rho is +0.089 (p=0.29)
+      between service-report involvement and mean assessment mark: indistinguishable
+      from zero. The reason is that being "named in a service issue" is not what it
+      sounds like. Reading the reports themselves, 6,674 of the SERVICE-polarity
+      records are "Customer Issues - Service Recovery Done" and 2,982 are "Cabin
+      Events / Safety reporting", and the crew named on them are the ones who did
+      the recovery or found the defect — one names L4 for finding a broken fire
+      extinguisher window on a pre-flight check, another names R1 for intervening
+      in a physical assault between passengers. The extract has no field recording
+      that a crew member caused anything. So this rate is now reported as response
+      activity and never scored. Note also that this dataset joins a real ServiceNow
+      extract to a synthetic PEP population, so independence is partly guaranteed by
+      construction — the finding to carry forward is the method, not the coefficient.
+    verify:
+      kind: mechanism
+      expect:
+        rho_issue_vs_mark: {close_to: 0.089, tolerance: 0.03}
+        n_measurable_on_both: {equals: 144}
+
+  - id: h2_mechanisms_disagree
+    difficulty: hard
+    question: Does it matter which scoring mechanism we use — do the business
+      weighting and the data-derived one pick the same weakest crew?
+    sources: [PEP, CLMS, CrewPortal, ServiceNow]
+    answer: >
+      They agree on the shape and disagree on the individuals. Rank correlation
+      between the two is 0.83 across the fleet, but only 2 of the weakest 5 and 10 of
+      the weakest 20 are the same people. That is the practically important number:
+      anything that acts on a named individual — a review, a promotion decision —
+      changes with the mechanism, so the mechanism has to be stated alongside the
+      name. The business weighting spends 61% of its weight on the seven assessment
+      categories; the data-derived one spends 39%, because it treats seven
+      correlated pass rates as fewer independent constructs and gives the freed
+      weight to signals from other systems.
+    verify:
+      kind: mechanism
+      expect:
+        rank_agreement: {close_to: 0.83, tolerance: 0.08}
+        weakest_5_overlap: {at_most: 4}
+
+  - id: h3_how_much_of_the_fleet_is_measurable
+    difficulty: hard
+    question: How much of the fleet can we score on crew feedback, and what does that
+      do to a scorecard?
+    sources: [ServiceNow, PEP]
+    answer: >
+      144 of 800 crew — 18%. The extract names 13,996 crew, so the gap is not missing
+      feedback but a different population: two months of line reports against the
+      modelled fleet. Consequences, all of them printed on the scorecard rather than
+      hidden: the ServiceNow signals are marked partial-population, they count only
+      for the crew who have them, and the other 656 are not scored on them — they are
+      not given a zero, which would read as clean rather than unknown. So a composite
+      built with them is not strictly comparable to one built without, and the
+      scorecard's own coverage figure is what tells you which you are reading.
+    verify:
+      sql: |
+        SELECT (SELECT COUNT(*) FROM EMPLOYEE_INFO WHERE P_IS_CURRENT = TRUE) AS fleet,
+               (SELECT COUNT(DISTINCT c.IGA)
+                  FROM SN_REPORT_CREW c
+                  JOIN EMPLOYEE_INFO e ON e.IGA = c.IGA AND e.P_IS_CURRENT = TRUE
+                 WHERE c.P_IS_CURRENT = TRUE) AS measurable,
+               (SELECT COUNT(*) FROM M_SN_CREW WHERE P_IS_CURRENT = TRUE) AS in_extract
+        LIMIT 1
+      expect:
+        fleet: {equals: 800}
+        measurable: {equals: 144}
+        in_extract: {equals: 13996}
+
+  - id: h4_is_the_dynamic_mechanism_just_the_form_again
+    difficulty: hard
+    question: The data-derived mechanism was built without any business input — is it
+      just reproducing the assessment form?
+    sources: [PEP, CLMS, CrewPortal, ServiceNow]
+    answer: >
+      No. It correlates +0.62 with the recorded assessment mark: related, as it should
+      be — both are trying to measure the same crew — but far from the +0.95 that
+      would mean it had rediscovered the form. It reaches all four sources, and its
+      ranking survives a ±20% perturbation of its own weights about 90% of the time.
+      Two design choices are what keep it independent: the mark is never used as
+      evidence for a weight (fitting to it can only reproduce it), and correlated
+      signals are collapsed into one construct so the seven assessment categories
+      cannot outvote everything else by being numerous.
+      Two caveats before this is read as an endorsement. Independent is not the same
+      as better — nothing here establishes that the data-derived ordering is the more
+      correct one, only that it is not a copy. And it is measured on a dataset whose
+      PEP side is synthetic, so the +0.62 says how the mechanism behaves, not how the
+      real assessment relates to real line reports.
+    verify:
+      kind: mechanism
+      expect:
+        rho_native: {close_to: 0.62, tolerance: 0.10}
+        rank_stability: {at_least: 0.80}
+        sources_reached: {at_least: 4}
+
+  - id: h5_good_marks_poor_customer_outcomes
+    difficulty: hard
+    question: Are there crew with strong assessment marks who are also heavily named
+      on customer-facing service reports?
+    sources: [PEP, ServiceNow]
+    answer: >
+      Yes — 9 of the 144 crew measurable on both sit in the top quartile on assessment
+      mark AND the top quartile on service-report involvement. The clearest is
+      IGA60649: mean mark 96.6, named on 51.5% of their 33 reported flights. The
+      question used to be phrased as "poor customer-facing outcomes", and that reading
+      was wrong, and the error was one of attribution: the reports name the crew who
+      did the service recovery, found the defect or handled the passenger, not crew
+      at fault — so this group is mentors and the reporting system agreeing about
+      strong crew, not disagreeing. Whether being named often is good, bad or merely
+      busy is not something this extract can settle, because it records no attribution
+      of fault at all — which is why the rate is reported beside a score, never inside
+      one.
+      What the same reports CAN support is `sn_validated_report_rate`: of the reports
+      a crew member acted on, how many were substantiated afterwards by a cabin defect
+      log entry or a human resolver. That is scored, and it is the one place noticing
+      a problem earns something.
+    verify:
+      kind: mechanism
+      expect:
+        divergent_crew: {equals: 9}
