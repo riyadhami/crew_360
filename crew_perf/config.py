@@ -23,12 +23,21 @@ EVAL_DIR = REPO_ROOT / "eval"
 
 # ─── Azure OpenAI ───────────────────────────────────────────────────────────
 LLM_ENDPOINT = os.getenv("LLM_ENDPOINT", os.getenv("AZURE_OPENAI_ENDPOINT", ""))
-EMBEDDING_ENDPOINT = os.getenv("EMBEDDING_ENDPOINT", LLM_ENDPOINT)
 API_KEY = os.getenv("AZURE_OPENAI_API_KEY", "")
-EMBEDDING_API_KEY = os.getenv("AZURE_EMBEDDING_API_KEY", API_KEY)
 API_VERSION = os.getenv("API_VERSION", "2024-02-15-preview")
 TOKEN_SCOPE = os.getenv("TOKEN_SCOPE", "https://cognitiveservices.azure.com/.default")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4.1")
+
+# Embeddings may be hosted by a different Azure OpenAI resource and API version.
+# EMBEDDING_ENDPOINT can be the complete REST endpoint copied from Azure; the
+# client normalises it to EMBEDDING_BASE_URL before constructing requests.
+EMBEDDING_BASE_URL = os.getenv("EMBEDDING_BASE_URL", "")
+EMBEDDING_ENDPOINT = os.getenv("EMBEDDING_ENDPOINT", EMBEDDING_BASE_URL or LLM_ENDPOINT)
+EMBEDDING_API_KEY = os.getenv(
+    "EMBEDDING_API_KEY",
+    os.getenv("AZURE_EMBEDDING_API_KEY", API_KEY),
+)
+EMBEDDING_API_VERSION = os.getenv("EMBEDDING_API_VERSION", API_VERSION)
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "16"))
 

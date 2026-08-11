@@ -71,6 +71,7 @@ tests/test_generator.py
 tests/test_graph_visualiser.py
 tests/test_joins.py
 tests/test_kg_builder.py
+tests/test_llm.py
 tests/test_orchestrator.py
 tests/test_reference.py
 tests/test_reporting_is_not_a_defect.py

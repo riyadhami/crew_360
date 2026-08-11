@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 import time
+from urllib.parse import urlsplit, urlunsplit
 
 import json_repair
 from azure.identity import AzureCliCredential, get_bearer_token_provider
@@ -21,6 +22,20 @@ _embed_client: AzureOpenAI | None = None
 
 
 # ─── Clients ────────────────────────────────────────────────────────────────
+
+
+def _embedding_azure_endpoint() -> str:
+    """Return the Azure resource URL expected by ``AzureOpenAI``.
+
+    Azure's portal often supplies a complete embeddings REST URL. The SDK takes
+    the resource base URL instead and adds the deployment path and API version
+    itself, so passing the portal URL unchanged produces an invalid doubled URL.
+    """
+    endpoint = config.EMBEDDING_BASE_URL or config.EMBEDDING_ENDPOINT
+    parsed = urlsplit(endpoint)
+    if "/openai/deployments/" in parsed.path:
+        return urlunsplit((parsed.scheme, parsed.netloc, "", "", ""))
+    return endpoint
 
 
 def get_llm_client() -> AzureOpenAI:
@@ -56,16 +71,16 @@ def get_embedding_client() -> AzureOpenAI:
 
     if config.EMBEDDING_API_KEY:
         _embed_client = AzureOpenAI(
-            azure_endpoint=config.EMBEDDING_ENDPOINT,
+            azure_endpoint=_embedding_azure_endpoint(),
             api_key=config.EMBEDDING_API_KEY,
-            api_version=config.API_VERSION,
+            api_version=config.EMBEDDING_API_VERSION,
         )
     else:
         token_provider = get_bearer_token_provider(AzureCliCredential(), config.TOKEN_SCOPE)
         _embed_client = AzureOpenAI(
-            azure_endpoint=config.EMBEDDING_ENDPOINT,
+            azure_endpoint=_embedding_azure_endpoint(),
             azure_ad_token_provider=token_provider,
-            api_version=config.API_VERSION,
+            api_version=config.EMBEDDING_API_VERSION,
         )
     return _embed_client
 
@@ -97,7 +112,7 @@ def call_llm(
                 temperature=temperature,
             )
             return completion.choices[0].message.content or ""
-        except Exception as e:  # noqa: BLE001 - surfaced after retries
+        except Exception as e:
             last_err = e
             if _is_content_policy_error(e) or attempt == max_retries - 1:
                 raise
@@ -124,7 +139,7 @@ def call_llm_messages(
     for attempt in range(max_retries):
         try:
             return client.chat.completions.create(**kwargs).choices[0].message
-        except Exception as e:  # noqa: BLE001
+        except Exception as e:
             last_err = e
             if _is_content_policy_error(e) or attempt == max_retries - 1:
                 raise
