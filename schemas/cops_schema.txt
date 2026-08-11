@@ -1,0 +1,528 @@
+{
+  "data_source": "COPS",
+  "domain": "Inflight Sales",
+  "tables": [
+    {
+      "table_name": "T_Sale",
+      "description": "Parent inflight sales transaction header containing overall sale level information for each crew and flight.",
+      "columns": [
+        {
+          "column_name": "T_SaleId",
+          "description": "Unique identifier of the sales transaction."
+        },
+        {
+          "column_name": "Crew_IGA",
+          "description": "Unique employee identifier of the crew member handling the sale."
+        },
+        {
+          "column_name": "Crew_Name",
+          "description": "Name of the crew member associated with the transaction."
+        },
+        {
+          "column_name": "Flt_Dt",
+          "description": "Flight date on which the sale occurred."
+        },
+        {
+          "column_name": "T_CIId",
+          "description": "Reference to cart inventory transaction."
+        },
+        {
+          "column_name": "M_CartId",
+          "description": "Reference to cart used during the flight."
+        },
+        {
+          "column_name": "AircraftType",
+          "description": "Aircraft type on which the sale occurred."
+        },
+        {
+          "column_name": "CartCategory",
+          "description": "Category of sales cart assigned to the flight."
+        }
+      ]
+    },
+    {
+      "table_name": "T_Sale_SectorDetail",
+      "description": "Stores route and sector-wise sales information for each transaction.",
+      "columns": [
+        {
+          "column_name": "T_SaleId",
+          "description": "Reference to sales transaction."
+        },
+        {
+          "column_name": "T_Sale_SectorDetailId",
+          "description": "Unique sector detail record identifier."
+        },
+        {
+          "column_name": "Dep",
+          "description": "Departure airport code."
+        },
+        {
+          "column_name": "Arr",
+          "description": "Arrival airport code."
+        },
+        {
+          "column_name": "Flt_No",
+          "description": "Flight number."
+        },
+        {
+          "column_name": "Flt_Dt",
+          "description": "Flight date."
+        },
+        {
+          "column_name": "SectorWiseSale",
+          "description": "Total sales amount recorded for the specific flight sector."
+        }
+      ]
+    },
+    {
+      "table_name": "T_Sale_ItemDetails",
+      "description": "Captures item-level inflight sales quantities and sales channels.",
+      "columns": [
+        {
+          "column_name": "T_SaleId",
+          "description": "Reference to sales transaction."
+        },
+        {
+          "column_name": "ItemId",
+          "description": "Unique item/product identifier."
+        },
+        {
+          "column_name": "SoldQty_ByCash",
+          "description": "Quantity sold through cash payment."
+        },
+        {
+          "column_name": "SoldQty_ByCC",
+          "description": "Quantity sold through credit card payment."
+        },
+        {
+          "column_name": "SoldQty_BySSR",
+          "description": "Quantity sold through pre-booked SSR orders."
+        },
+        {
+          "column_name": "SoldQty_ByACMConsumption",
+          "description": "Quantity consumed under ACM or complimentary distribution."
+        },
+        {
+          "column_name": "ItemUnitPrice",
+          "description": "Selling price per unit of the item."
+        }
+      ]
+    },
+    {
+      "table_name": "T_Sale_PaymentAmountDetails",
+      "description": "Stores payment reconciliation, deposits, recoveries and discrepancies.",
+      "columns": [
+        {
+          "column_name": "ActualCashSaleAmount",
+          "description": "Total sales amount collected via cash."
+        },
+        {
+          "column_name": "ActualCCSaleAmount",
+          "description": "Total sales amount collected via credit card."
+        },
+        {
+          "column_name": "DepositedCashAmount",
+          "description": "Cash amount deposited after flight completion."
+        },
+        {
+          "column_name": "DepositedICDMAmount",
+          "description": "Amount deposited through ICDM process."
+        },
+        {
+          "column_name": "ImprestAmount",
+          "description": "Cash float or imprest amount issued."
+        },
+        {
+          "column_name": "RecoveryAmount",
+          "description": "Recovered amount from crew or other adjustments."
+        },
+        {
+          "column_name": "DiscrepencyAmount",
+          "description": "Difference between expected and actual collections."
+        }
+      ]
+    },
+    {
+      "table_name": "T_Sale_PaymentCurrDetails",
+      "description": "Captures multi-currency collections for international sales.",
+      "columns": [
+        {
+          "column_name": "CurrencyId",
+          "description": "Unique currency identifier."
+        },
+        {
+          "column_name": "Qty",
+          "description": "Number of currency notes or units collected."
+        },
+        {
+          "column_name": "ValueInUsd",
+          "description": "Equivalent monetary value in USD."
+        },
+        {
+          "column_name": "ConversionRate",
+          "description": "Exchange rate applied during conversion."
+        }
+      ]
+    },
+    {
+      "table_name": "T_Sale_PaymentReceipts",
+      "description": "Stores deposit slips and payment receipt details.",
+      "columns": [
+        {
+          "column_name": "SlipType",
+          "description": "Type of receipt or deposit slip."
+        },
+        {
+          "column_name": "SlipNo",
+          "description": "Receipt or slip reference number."
+        },
+        {
+          "column_name": "Amount",
+          "description": "Amount recorded in the receipt."
+        },
+        {
+          "column_name": "Remark",
+          "description": "Additional notes entered during reconciliation."
+        }
+      ]
+    },
+    {
+      "table_name": "T_Sale_CashDenomination",
+      "description": "Stores denomination-level breakdown of cash collections.",
+      "columns": [
+        {
+          "column_name": "CurrencyId",
+          "description": "Currency identifier."
+        },
+        {
+          "column_name": "NoteType",
+          "description": "Type of currency note or coin."
+        },
+        {
+          "column_name": "DenominationQty",
+          "description": "Quantity of notes or coins."
+        },
+        {
+          "column_name": "DenominationTotal",
+          "description": "Total value for the denomination."
+        }
+      ]
+    },
+    {
+      "table_name": "M_Item",
+      "description": "Master table containing onboard product information.",
+      "columns": [
+        {
+          "column_name": "ItemId",
+          "description": "Unique product identifier."
+        },
+        {
+          "column_name": "ItemName",
+          "description": "Name of the onboard product."
+        },
+        {
+          "column_name": "ItemCategory",
+          "description": "Product category classification."
+        },
+        {
+          "column_name": "DutyTypeId",
+          "description": "Duty or tax classification associated with the item."
+        }
+      ]
+    },
+    {
+      "table_name": "M_ItemPrice",
+      "description": "Stores product pricing and valuation details.",
+      "columns": [
+        {
+          "column_name": "ItemId",
+          "description": "Reference to product."
+        },
+        {
+          "column_name": "Price",
+          "description": "Selling price of the item."
+        },
+        {
+          "column_name": "PurchasePrice",
+          "description": "Procurement cost of the item."
+        },
+        {
+          "column_name": "CurrencyTypeId",
+          "description": "Currency in which pricing is maintained."
+        },
+        {
+          "column_name": "FromDate",
+          "description": "Effective start date of price validity."
+        },
+        {
+          "column_name": "ToDate",
+          "description": "Effective end date of price validity."
+        }
+      ]
+    },
+    {
+      "table_name": "M_Cart",
+      "description": "Master table containing cart identification information.",
+      "columns": [
+        {
+          "column_name": "M_CartId",
+          "description": "Unique cart identifier."
+        },
+        {
+          "column_name": "CartNumber",
+          "description": "Business cart number used operationally."
+        }
+      ]
+    },
+    {
+      "table_name": "M_Flight_Info",
+      "description": "Master flight information providing route and aircraft context.",
+      "columns": [
+        {
+          "column_name": "TxnId",
+          "description": "Unique flight transaction identifier."
+        },
+        {
+          "column_name": "GroupId",
+          "description": "Flight group identifier."
+        },
+        {
+          "column_name": "Flt_Dt",
+          "description": "Flight date."
+        },
+        {
+          "column_name": "Flt_No",
+          "description": "Flight number."
+        },
+        {
+          "column_name": "Dep",
+          "description": "Departure airport."
+        },
+        {
+          "column_name": "Arr",
+          "description": "Arrival airport."
+        },
+        {
+          "column_name": "AircraftID",
+          "description": "Aircraft registration or identifier."
+        },
+        {
+          "column_name": "FlightType",
+          "description": "Domestic or international flight classification."
+        }
+      ]
+    },
+    {
+      "table_name": "T_CI",
+      "description": "Cart inventory transaction header bridging inventory uplift and sales.",
+      "columns": [
+        {
+          "column_name": "T_CIId",
+          "description": "Unique cart inventory transaction ID."
+        },
+        {
+          "column_name": "GroupId",
+          "description": "Inventory movement group identifier."
+        },
+        {
+          "column_name": "Flt_Dt",
+          "description": "Flight date."
+        },
+        {
+          "column_name": "Flt_No",
+          "description": "Flight number."
+        },
+        {
+          "column_name": "CartType",
+          "description": "Type of service cart."
+        },
+        {
+          "column_name": "AircraftTypeID",
+          "description": "Aircraft type identifier."
+        }
+      ]
+    },
+
+    {
+      "table_name": "T_CI_Details",
+      "description": "Inventory movement detail records by sector.",
+      "columns": [
+        {
+          "column_name": "T_CI_DetailsId",
+          "description": "Unique inventory detail identifier."
+        },
+        {
+          "column_name": "SectorId",
+          "description": "Flight sector identifier."
+        },
+        {
+          "column_name": "SequenceNo",
+          "description": "Sequence number of sector movement."
+        },
+        {
+          "column_name": "UploadStationName",
+          "description": "Airport station where inventory was loaded."
+        }
+      ]
+    },
+
+    {
+      "table_name": "T_CI_ItemQty",
+      "description": "Stores item quantities uplifted and available for sale.",
+      "columns": [
+        {
+          "column_name": "ItemId",
+          "description": "Product identifier."
+        },
+        {
+          "column_name": "Qty",
+          "description": "Current available quantity."
+        },
+        {
+          "column_name": "InitQty",
+          "description": "Initial uplift quantity loaded."
+        },
+        {
+          "column_name": "PBQty",
+          "description": "Pre-booked quantity allocated."
+        },
+        {
+          "column_name": "CPMLQty",
+          "description": "Complimentary meal quantity allocated."
+        },
+        {
+          "column_name": "AdditionalQty",
+          "description": "Additional quantity loaded during operations."
+        }
+      ]
+    },
+
+    {
+      "table_name": "T_CI_CartReceiving",
+      "description": "Records cart receipt and damage information after operations.",
+      "columns": [
+        {
+          "column_name": "ReceivedQuantity",
+          "description": "Quantity received during inventory return."
+        },
+        {
+          "column_name": "DamagedQuantity",
+          "description": "Quantity reported as damaged."
+        }
+      ]
+    },
+
+    {
+      "table_name": "T_CI_Movement",
+      "description": "Captures cart movement across flight sectors.",
+      "columns": [
+        {
+          "column_name": "GroupId",
+          "description": "Movement group identifier."
+        },
+        {
+          "column_name": "SeqNo",
+          "description": "Movement sequence number."
+        },
+        {
+          "column_name": "Dep",
+          "description": "Departure airport."
+        },
+        {
+          "column_name": "Arr",
+          "description": "Arrival airport."
+        },
+        {
+          "column_name": "Flt_No",
+          "description": "Flight number."
+        },
+        {
+          "column_name": "Flt_Dt",
+          "description": "Flight date."
+        }
+      ]
+    },
+
+    {
+      "table_name": "M_Currency",
+      "description": "Master currency reference table.",
+      "columns": [
+        {
+          "column_name": "CurrencyId",
+          "description": "Unique currency identifier."
+        },
+        {
+          "column_name": "CurrencyCode",
+          "description": "ISO currency code."
+        }
+      ]
+    },
+
+    {
+      "table_name": "M_CurrencyConversionRate",
+      "description": "Stores foreign currency conversion rates.",
+      "columns": [
+        {
+          "column_name": "ConversionRate",
+          "description": "Exchange rate used to convert currency values."
+        }
+      ]
+    },
+
+    {
+      "table_name": "T_SalesTarget",
+      "description": "Defines sales targets by flight category.",
+      "columns": [
+        {
+          "column_name": "FlightType",
+          "description": "Flight classification."
+        },
+        {
+          "column_name": "SalesTarget",
+          "description": "Target sales amount expected for the flight category."
+        }
+      ]
+    },
+
+    {
+      "table_name": "T_Sales_TransactionSettleMent",
+      "description": "Stores card settlement information for sales transactions.",
+      "columns": [
+        {
+          "column_name": "SettlementAmount",
+          "description": "Amount settled by payment processor."
+        },
+        {
+          "column_name": "TransactionId",
+          "description": "Payment transaction identifier."
+        }
+      ]
+    },
+
+    {
+      "table_name": "T_Sales_ReconcileSettleMent",
+      "description": "Maps sales records to settlement records for reconciliation.",
+      "columns": [
+        {
+          "column_name": "SettlementMappingFields",
+          "description": "Fields used to map sales transactions with settlements."
+        }
+      ]
+    },
+
+    {
+      "table_name": "T_Sales_PaymentDetails",
+      "description": "Stores payment-level breakup for sales transactions.",
+      "columns": [
+        {
+          "column_name": "PaymentType",
+          "description": "Mode of payment used."
+        },
+        {
+          "column_name": "Amount",
+          "description": "Amount paid via the payment method."
+        }
+      ]
+    }
+  ]
+}
